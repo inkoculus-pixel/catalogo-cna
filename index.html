@@ -54,7 +54,7 @@ body{font-family:'Noto Sans',Arial,sans-serif;background:var(--bg);color:var(--t
 
 /* TABLA EXPANDIBLE */
 .filter-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
-.filter-bar input{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-size:14px;flex:1;min-width:250px; font-family:'Noto Sans';}
+.filter-bar input, .filter-bar select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-size:14px;flex:1;min-width:250px; font-family:'Noto Sans';}
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 thead{background:var(--primary);color:#fff}
 th{padding:12px 14px;text-align:left;font-size:13px;font-weight:600;}
@@ -114,6 +114,11 @@ select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-s
 </div>
 
 <div id="tab-mapa" class="tab-content">
+  <div class="filter-bar">
+    <select id="map-esp-select" onchange="filtrarMapa()">
+      <option value="">— Mostrar todas las Especies —</option>
+    </select>
+  </div>
   <div class="map-wrap">
     <div id="map"></div>
   </div>
@@ -141,6 +146,7 @@ let datosIndice = [];
 let datosCoordenadas = [];
 let datosCaptura = [];
 let map;
+let markerCluster;
 let capChart;
 
 async function sincronizarGoogleSheets() {
@@ -181,12 +187,12 @@ function showTab(tabId, btn) {
   if (tabId === 'mapa' && map) setTimeout(() => map.invalidateSize(), 100);
 }
 
+// --- TABLA DE ESPECIES ---
 function renderTabla(datos) {
   const tbody = document.getElementById('esp-tbody');
   tbody.innerHTML = '';
   
   datos.forEach((item, index) => {
-    // Fila principal visible
     const tr = document.createElement('tr');
     tr.className = 'main-row';
     tr.innerHTML = `
@@ -196,7 +202,6 @@ function renderTabla(datos) {
       <td>${item['Litoral'] || ''}</td>
     `;
     
-    // Fila de detalles desplegable
     const trDetails = document.createElement('tr');
     trDetails.className = 'details-row';
     trDetails.id = `details-${index}`;
@@ -211,7 +216,6 @@ function renderTabla(datos) {
       </td>
     `;
 
-    // Evento clic para expandir
     tr.onclick = () => {
       const isHidden = trDetails.style.display === 'none' || trDetails.style.display === '';
       trDetails.style.display = isHidden ? 'table-row' : 'none';
@@ -230,7 +234,6 @@ function filtrarTabla() {
   for (let i = 0; i < rows.length; i += 2) {
     const mainRow = rows[i];
     const detailsRow = rows[i+1];
-    
     const textToSearch = (mainRow.innerText + " " + detailsRow.innerText).toLowerCase();
     
     if (textToSearch.includes(input)) {
@@ -243,34 +246,71 @@ function filtrarTabla() {
   }
 }
 
+// --- MAPA ---
 function initMap() {
   map = L.map('map').setView([23.6345, -102.5528], 5);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OpenStreetMap & CARTO'
   }).addTo(map);
 
-  const markerCluster = L.markerClusterGroup();
+  markerCluster = L.markerClusterGroup();
+  map.addLayer(markerCluster);
+
+  // Poblar el filtro desplegable de especies del mapa
+  const selectMap = document.getElementById('map-esp-select');
+  const especiesUnicas = [...new Set(datosCoordenadas.map(item => item['Especie'] || item['especie']))].filter(Boolean).sort();
   
+  especiesUnicas.forEach(esp => {
+    const option = document.createElement('option');
+    option.value = esp;
+    option.textContent = esp;
+    selectMap.appendChild(option);
+  });
+
+  // Renderizar todos los puntos inicialmente
+  renderMarcadores("");
+}
+
+function filtrarMapa() {
+  const especieSel = document.getElementById('map-esp-select').value;
+  renderMarcadores(especieSel);
+}
+
+function renderMarcadores(filtroEspecie) {
+  markerCluster.clearLayers();
+
   datosCoordenadas.forEach(upa => {
-    const lat = parseFloat(upa.latitud || upa.Latitud);
-    const lng = parseFloat(upa.longitud || upa.Longitud);
+    const especieUPA = upa['Especie'] || upa['especie'] || '';
+    
+    // Si hay un filtro seleccionado y no coincide, saltamos esta UPA
+    if (filtroEspecie && especieUPA !== filtroEspecie) return;
+
+    // Buscar latitudes y longitudes exactas
+    const lat = parseFloat(upa['LATITUD F'] || upa['latitud']);
+    const lng = parseFloat(upa['LONGITD F'] || upa['longitud']);
     
     if(!isNaN(lat) && !isNaN(lng)) {
       const marker = L.marker([lat, lng]);
+      
       const popupText = `
-        <div style="font-family:'Noto Sans'">
-          <h4 style="color:#611232; margin-bottom:5px;">${upa.nombre_upa || upa.Nombre || 'UPA'}</h4>
-          <p><b>Especie:</b> ${upa.especie || upa.Especie || 'N/A'}</p>
-          <p><b>Estado:</b> ${upa.estado || upa.Estado || 'N/A'}</p>
+        <div style="font-family:'Noto Sans'; font-size:13px; color:var(--text);">
+          <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">
+            ${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}
+          </h4>
+          <p style="margin-bottom:4px;"><b>Especie:</b> ${especieUPA}</p>
+          <p style="margin-bottom:4px;"><b>Superficie de producción (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
+          <p style="margin-bottom:4px;"><b>Número de cuerpos de agua:</b> ${upa['Número de cuerpos de agua'] || 'N/A'}</p>
+          <p style="margin-bottom:4px;"><b>Función zootécnica:</b> ${upa['Función zootécnica'] || 'N/A'}</p>
+          <p style="margin-bottom:0;"><b>Tipo de instalación:</b> ${upa['Tipo de instalación'] || 'N/A'}</p>
         </div>
       `;
       marker.bindPopup(popupText);
       markerCluster.addLayer(marker);
     }
   });
-  map.addLayer(markerCluster);
 }
 
+// --- GRÁFICAS DE CAPTURA ---
 function initCaptura() {
   const select = document.getElementById('cap-select');
   const especiesUnicas = [...new Set(datosCaptura.map(item => item.Especie || item.especie))];
