@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Catálogo de recursos | IMIPAS</title>
+<title>Catálogo de recursos RNIIPA | IMIPAS</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
@@ -14,50 +14,115 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --primary:#611232;
-  --primary-dark:#4a0e27;
-  --secondary:#a57f2c;
-  --bg:#ffffff; 
+  /* PALETA OFICIAL GOB.MX */
+  --gob-green: #13322B;
+  --primary: #9D2449; /* Guinda */
+  --primary-dark: #7A1C39;
+  --secondary: #B38E5D; /* Dorado */
+  --bg:#f4f6f9; 
   --border:#dee2e6;
   --text:#212529;
   --text2:#6c757d;
 }
-body{font-family:'Noto Sans',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh;}
 
-/* HEADER INSTITUCIONAL */
-.gob-header{background:var(--primary);color:#fff;text-align:center; position:relative;}
-.gob-main{padding:24px 20px; display:flex; flex-direction:column; align-items:center; gap:8px;}
-.gob-logo{font-size:32px;font-weight:700;letter-spacing:-0.5px;}
-.gob-subtitle{font-size:18px; font-weight:500; opacity:.9; display:flex; align-items:center; gap:10px; justify-content:center;}
-.version-badge{font-size:11px; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:12px; font-weight:600; letter-spacing:0.5px;}
+/* HEADER GOB.MX OFICIAL */
+.gobmx-topbar {
+  background-color: var(--gob-green);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 5%;
+}
+.gobmx-topbar img {
+  height: 28px;
+}
 
-/* SUBNAV TABS */
-.subnav{background:var(--primary-dark);display:flex;overflow-x:auto; justify-content:center;}
-.subnav button{background:none;border:none;color:#ffffffcc;padding:12px 24px;font-size:14px;cursor:pointer;font-weight:500;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
-.subnav button:hover,.subnav button.active{color:#fff;border-bottom-color:var(--secondary);background:rgba(255,255,255,.08)}
+/* HEADER IMIPAS */
+.imipas-header {
+  background-color: #ffffff;
+  padding: 24px 5%;
+  border-bottom: 4px solid var(--primary);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.imipas-header h1 {
+  font-size: 24px;
+  color: var(--gob-green);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.imipas-header h2 {
+  font-size: 16px;
+  color: var(--text2);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.version-badge {
+  font-size: 11px;
+  background: var(--gob-green);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-family: 'Noto Sans', sans-serif;
+}
+
+/* SUBNAV TABS TIPO GOBIERNO */
+.subnav {
+  background: #ffffff;
+  display: flex;
+  overflow-x: auto;
+  padding: 0 5%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  margin-bottom: 30px;
+}
+.subnav button {
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 16px 24px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  border-bottom: 4px solid transparent;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.subnav button:hover {
+  color: var(--primary);
+  background: #f8f9fa;
+}
+.subnav button.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
 
 /* LAYOUT & CARGA */
-.tab-content{display:none; padding:30px 24px; max-width:1400px; margin:0 auto;}
+.tab-content{display:none; padding:0 5% 40px 5%; max-width:1600px; margin:0 auto;}
 .tab-content.active{display:block}
 #loader{text-align:center; padding:80px; font-size:16px; color:var(--text2);}
 .spinner {border: 4px solid rgba(0,0,0,.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: var(--primary); animation: spin 1s linear infinite; margin: 0 auto 15px;}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* MAPA PRINCIPAL */
-#map{height:calc(100vh - 280px);width:100%; border-radius:8px; border:1px solid var(--border); z-index: 1;}
+#map{height:calc(100vh - 350px);width:100%; border-radius:8px; border:1px solid var(--border); z-index: 1;}
 
 /* TABLA EXPANDIBLE */
 .filter-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
-.filter-bar input, .filter-bar select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-size:14px;flex:1;min-width:250px; font-family:'Noto Sans';}
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-thead{background:var(--primary);color:#fff}
-th{padding:12px 14px;text-align:left;font-size:13px;font-weight:600;}
-td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+.filter-bar input, .filter-bar select{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-size:14px;flex:1;min-width:250px; font-family:'Noto Sans';}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+thead{background:var(--gob-green);color:#fff}
+th{padding:14px 16px;text-align:left;font-size:13px;font-weight:600; text-transform:uppercase; letter-spacing: 0.5px;}
+td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-family:'Noto Sans', sans-serif;}
 
 .main-row{transition: background 0.2s;}
 .main-row:hover{background:#f8f0f2;}
@@ -69,20 +134,20 @@ td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
 .link-especie:hover{text-decoration:underline; color:var(--secondary);}
 
 /* FICHA TÉCNICA */
-.btn-back{background:#f8f9fa; border:1px solid var(--border); padding:8px 16px; border-radius:6px; cursor:pointer; font-family:'Noto Sans'; font-weight:600; color:var(--text); margin-bottom:20px; display:inline-flex; align-items:center;}
-.btn-back:hover{background:#e9ecef;}
+.btn-back{background:#fff; border:1px solid var(--border); padding:10px 20px; border-radius:6px; cursor:pointer; font-family:'Montserrat'; font-weight:600; color:var(--gob-green); margin-bottom:24px; display:inline-flex; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.btn-back:hover{background:#f0f0f0;}
 
-.ficha-header{display:flex; flex-wrap:wrap; gap:24px; margin-bottom:24px; align-items:flex-start;}
-.ficha-img-box{flex:0 0 300px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#f8f9fa; text-align:center;}
+.ficha-header{display:flex; flex-wrap:wrap; gap:30px; margin-bottom:30px; align-items:flex-start;}
+.ficha-img-box{flex:0 0 350px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#fff; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.08);}
 .ficha-img-box img{width:100%; height:auto; object-fit:cover; display:block;}
 .ficha-title-box{flex:1; min-width:300px;}
-.ficha-title-box h1{font-size:32px; color:var(--primary); margin-bottom:8px; text-transform:uppercase; letter-spacing:-0.5px;}
+.ficha-title-box h1{font-size:36px; color:var(--gob-green); margin-bottom:8px; text-transform:uppercase; letter-spacing:-0.5px; font-weight:700;}
 
-.ficha-grid{display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:20px;}
-.ficha-card{background:#fff; border:1px solid var(--border); border-radius:8px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.04);}
-.ficha-card h4{color:var(--primary); border-bottom:2px solid #f0f0f0; padding-bottom:8px; margin-bottom:12px; font-size:15px; text-transform:uppercase; letter-spacing:0.5px;}
-.data-item{margin-bottom:10px; font-size:13.5px; line-height:1.5; text-align:justify;}
-.data-item strong{color:#444; display:block; font-size:12px; text-transform:uppercase; color:var(--text2);}
+.ficha-grid{display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:24px;}
+.ficha-card{background:#fff; border:1px solid var(--border); border-radius:8px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.ficha-card h4{color:var(--primary); border-bottom:2px solid #f0f0f0; padding-bottom:10px; margin-bottom:16px; font-size:16px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;}
+.data-item{margin-bottom:12px; font-size:14px; line-height:1.6; text-align:justify; font-family:'Noto Sans', sans-serif;}
+.data-item strong{color:#444; display:block; font-size:12px; text-transform:uppercase; color:var(--text2); font-family:'Montserrat', sans-serif;}
 .data-item span{display:block; color:var(--text); margin-top:2px;}
 
 /* MAPA Y GRAFICA DENTRO DE FICHA */
@@ -90,22 +155,37 @@ td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
 .chart-ficha-container{position: relative; height: 350px; width: 100%;}
 
 /* CAPTURA GLOBAL */
-.chart-wrap{background:#fff;border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06); max-width: 900px; margin:0 auto;}
-select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-size:14px; min-width:300px; font-family:'Noto Sans';}
+.chart-wrap{background:#fff;border-radius:8px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.08); max-width: 1000px; margin:0 auto;}
+select{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-size:14px; min-width:300px; font-family:'Noto Sans';}
 
-/* FOOTER */
-.gob-footer{background:#2c2c2c;color:#fff;padding:24px;text-align:center;font-size:12px;margin-top:40px}
+/* FOOTER GOB.MX OFICIAL */
+.gobmx-footer {
+  background-color: var(--gob-green);
+  color: #fff;
+  padding: 40px 5% 60px 5%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 40px;
+  background-image: url('https://framework-gb.cdn.gob.mx/landing/img/pleca.svg');
+  background-repeat: repeat-x;
+  background-position: bottom;
+  margin-top: 60px;
+}
+.gobmx-footer img { max-width: 200px; margin-bottom: 20px; }
+.gobmx-footer h3 { font-size: 16px; margin-bottom: 20px; font-weight: 700; color: #fff; }
+.gobmx-footer p, .gobmx-footer a { font-size: 14px; color: #d1d5d8; text-decoration: none; line-height: 1.6; display:block; margin-bottom:10px; font-family:'Noto Sans', sans-serif;}
+.gobmx-footer a:hover { color: #fff; text-decoration: underline; }
 </style>
 </head>
 <body>
 
-<header class="gob-header">
-  <div class="gob-main">
-    <div class="gob-logo">IMIPAS</div>
-    <div class="gob-subtitle">
-      Catálogo de recursos <span class="version-badge">v1.5</span>
-    </div>
-  </div>
+<div class="gobmx-topbar">
+  <img src="https://framework-gb.cdn.gob.mx/landing/img/logoheader.svg" alt="Gobierno de México">
+</div>
+
+<header class="imipas-header">
+  <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
+  <h2>Micrositio RNIIPA - Catálogo de Recursos <span class="version-badge">v1.6</span></h2>
 </header>
 
 <nav class="subnav" id="menu" style="display:none;">
@@ -116,7 +196,7 @@ select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-s
 
 <div id="loader">
   <div class="spinner"></div>
-  <p>Sincronizando datos...</p>
+  <p>Sincronizando datos de la RNIIPA...</p>
 </div>
 
 <div id="tab-especies" class="tab-content active">
@@ -166,8 +246,29 @@ select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-s
   </div>
 </div>
 
-<footer class="gob-footer">
-  <b>IMIPAS</b> – Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentable
+<footer class="gobmx-footer">
+  <div>
+    <img src="https://framework-gb.cdn.gob.mx/landing/img/logoheader.svg" alt="Gobierno de México">
+    <p><b>IMIPAS</b></p>
+    <p>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</p>
+  </div>
+  <div>
+    <h3>Enlaces</h3>
+    <a href="#">Participa</a>
+    <a href="#">Publicaciones Oficiales</a>
+    <a href="#">Marco Jurídico</a>
+    <a href="#">Plataforma Nacional de Transparencia</a>
+  </div>
+  <div>
+    <h3>¿Qué es gob.mx?</h3>
+    <p>Es el portal único de trámites, información y participación ciudadana. <a href="#" style="display:inline; text-decoration:underline; color:#fff;">Leer más</a></p>
+  </div>
+  <div>
+    <h3>Contacto</h3>
+    <p>Mesa de ayuda: dudas e información</p>
+    <p>gobmx@funcionpublica.gob.mx</p>
+    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 1.6</p>
+  </div>
 </footer>
 
 <script>
@@ -226,7 +327,6 @@ function showTab(tabId, btn) {
   if (tabId === 'mapa' && map) setTimeout(() => map.invalidateSize(), 100);
 }
 
-// --- TABLA E ÍNDICE ---
 function renderTabla(datos) {
   const tbody = document.getElementById('esp-tbody');
   tbody.innerHTML = '';
@@ -287,7 +387,6 @@ function filtrarTabla() {
   }
 }
 
-// --- FICHA TÉCNICA DINÁMICA ---
 function renderDato(label, key, item) {
   const val = item[key] || item[key + ':'] || '';
   if (!val || val.trim() === '') return '';
@@ -317,13 +416,13 @@ function abrirFicha(valorComun) {
       <div class="ficha-title-box">
         <h1>${tituloPrincipal}</h1>
         
-        <div style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+        <div style="margin-bottom: 24px; border-bottom: 2px solid var(--gob-green); padding-bottom: 12px;">
           <strong style="color:var(--primary); font-size:13px; text-transform:uppercase;">Nombre Común</strong>
-          <span style="font-size:18px; display:block; color:var(--text); font-weight:500; margin-top:2px;">${nombreComun}</span>
-          <em style="color:var(--text2); font-size:15px; display:block; margin-top:4px;">${nombreCientifico}</em>
+          <span style="font-size:20px; display:block; color:var(--text); font-weight:600; margin-top:4px;">${nombreComun}</span>
+          <em style="color:var(--text2); font-size:16px; display:block; margin-top:4px;">${nombreCientifico}</em>
         </div>
         
-        <div style="display:flex; gap:20px; flex-wrap:wrap; background:#f8f9fa; padding:16px; border-radius:8px; border:1px solid var(--border);">
+        <div style="display:flex; gap:24px; flex-wrap:wrap; background:#fff; padding:20px; border-radius:8px; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.05);">
           ${renderDato('Estatus del cultivo', 'Estatus del cultivo', item)}
           ${renderDato('Nivel de dominio biotecnológico', 'Nivel de dominio de la biotecnología', item)}
           ${renderDato('Origen', 'Origen', item)}
@@ -335,7 +434,7 @@ function abrirFicha(valorComun) {
     <div class="ficha-grid">
       
       <div class="ficha-card" style="grid-column: 1 / -1; padding:0; overflow:hidden;">
-        <h4 style="padding: 20px 20px 0 20px; border-bottom: none;">Distribución de UPAs para ${tituloPrincipal}</h4>
+        <h4 style="padding: 24px 24px 0 24px; border-bottom: none;">Distribución de UPAs para ${tituloPrincipal}</h4>
         <div id="map-ficha"></div>
       </div>
 
@@ -386,7 +485,7 @@ function abrirFicha(valorComun) {
 
       <div class="ficha-card" style="grid-column: 1 / -1;">
         <h4>Información Institucional</h4>
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:30px;">
           <div>
             ${renderDato('Entidades de cultivo', 'ENTIDADES DE CULTIVO', item)}
             ${renderDato('Antecedentes', 'ANTECEDENTES', item)}
@@ -415,12 +514,8 @@ function abrirFicha(valorComun) {
   document.getElementById('tab-ficha').style.display = 'block';
   window.scrollTo(0, 0);
 
-  // INICIALIZACIÓN DEL MAPA DE LA FICHA
   setTimeout(() => {
-    if(mapFichaInstance) {
-      mapFichaInstance.remove();
-    }
-    
+    if(mapFichaInstance) mapFichaInstance.remove();
     mapFichaInstance = L.map('map-ficha').setView([23.6345, -102.5528], 5);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mapFichaInstance);
     
@@ -432,15 +527,12 @@ function abrirFicha(valorComun) {
       if (comunUPA === valorComun) {
         const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
         const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
-        
         if(!isNaN(lat) && !isNaN(lng)) {
           hayPuntos = true;
           const marker = L.marker([lat, lng]);
           marker.bindPopup(`
             <div style="font-family:'Noto Sans'; font-size:13px;">
-              <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">
-                ${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}
-              </h4>
+              <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}</h4>
               <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || comunUPA}</p>
               <p style="margin-bottom:4px;"><b>Superficie (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
               <p style="margin-bottom:0;"><b>Tipo de instalación:</b> ${upa['Tipo de instalación'] || 'N/A'}</p>
@@ -452,40 +544,25 @@ function abrirFicha(valorComun) {
     });
 
     mapFichaInstance.addLayer(clusterFicha);
-    
-    if (hayPuntos) {
-      mapFichaInstance.fitBounds(clusterFicha.getBounds().pad(0.1));
-    }
+    if (hayPuntos) mapFichaInstance.fitBounds(clusterFicha.getBounds().pad(0.1));
   }, 100);
 
-  // INICIALIZACIÓN DE LA GRÁFICA DE LA FICHA (CON SUMA AGRUPADA POR AÑO)
   setTimeout(() => {
-    if (chartFichaInstance) {
-        chartFichaInstance.destroy();
-    }
+    if (chartFichaInstance) chartFichaInstance.destroy();
 
     const datosFiltradosCap = datosCaptura.filter(item => item['Común'] === valorComun);
-    
     if (datosFiltradosCap.length > 0) {
-        // Objeto para almacenar la suma de kilos por cada año
         const agregadosPorAno = {};
-        
         datosFiltradosCap.forEach(d => {
             const year = d['AÑO'] || d['Año'] || d['anio'];
-            // Buscamos PESO VIVO (KG) o respaldos
             const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
-            
             if (year) {
-                if (!agregadosPorAno[year]) {
-                    agregadosPorAno[year] = 0;
-                }
-                agregadosPorAno[year] += peso; // Sumamos los kilogramos
+                if (!agregadosPorAno[year]) agregadosPorAno[year] = 0;
+                agregadosPorAno[year] += peso;
             }
         });
 
-        // Ordenamos las llaves de los años de menor a mayor
         const labels = Object.keys(agregadosPorAno).sort((a, b) => parseInt(a) - parseInt(b));
-        // Mapeamos los años ordenados para obtener su respectiva suma total
         const dataKg = labels.map(year => agregadosPorAno[year]);
 
         const ctxFicha = document.getElementById('ficha-cap-chart').getContext('2d');
@@ -496,10 +573,10 @@ function abrirFicha(valorComun) {
                 datasets: [{
                     label: 'Captura Total Anual (Kg)',
                     data: dataKg,
-                    backgroundColor: 'rgba(97,18,50,0.2)',
-                    borderColor: '#611232',
+                    backgroundColor: 'rgba(157,36,73,0.15)', /* Guinda transparente */
+                    borderColor: '#9D2449', /* Guinda GOB.MX */
                     borderWidth: 2,
-                    pointBackgroundColor: '#a57f2c',
+                    pointBackgroundColor: '#B38E5D', /* Dorado GOB.MX */
                     pointRadius: 4,
                     fill: true
                 }]
@@ -514,7 +591,7 @@ function abrirFicha(valorComun) {
             }
         });
     } else {
-        document.getElementById('chart-ficha-wrapper').innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:40px;">No hay historial estadístico de captura disponible para esta especie.</p>`;
+        document.getElementById('chart-ficha-wrapper').innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:40px; font-family:'Noto Sans';">No hay historial estadístico de captura disponible para esta especie.</p>`;
     }
   }, 100);
 }
@@ -568,9 +645,7 @@ function renderMarcadores(filtroComun) {
       const marker = L.marker([lat, lng]);
       marker.bindPopup(`
         <div style="font-family:'Noto Sans'; font-size:13px;">
-          <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">
-            ${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}
-          </h4>
+          <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}</h4>
           <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || comunUPA}</p>
           <p style="margin-bottom:4px;"><b>Superficie de producción (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
           <p style="margin-bottom:4px;"><b>Número de cuerpos de agua:</b> ${upa['Número de cuerpos de agua'] || 'N/A'}</p>
@@ -608,9 +683,8 @@ function updateCaptura() {
   if (!comunSel) return;
 
   const datosFiltrados = datosCaptura.filter(item => item['Común'] === comunSel);
-  
-  // Agrupamos la suma de peso y valor por cada año también en la gráfica global
   const agregados = {};
+  
   datosFiltrados.forEach(d => {
       const year = d['AÑO'] || d['Año'] || d['anio'];
       const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
@@ -624,8 +698,8 @@ function updateCaptura() {
   });
 
   const labels = Object.keys(agregados).sort((a,b) => parseInt(a) - parseInt(b));
-  const weights = labels.map(y => Math.round(agregados[y].peso / 1000) || 0); // Convertimos a Toneladas
-  const valores = labels.map(y => Math.round(agregados[y].valor / 1000000) || 0); // Convertimos a Millones MXP
+  const weights = labels.map(y => Math.round(agregados[y].peso / 1000) || 0); 
+  const valores = labels.map(y => Math.round(agregados[y].valor / 1000000) || 0); 
 
   if (capChart) capChart.destroy();
   const ctx = document.getElementById('cap-chart').getContext('2d');
@@ -635,8 +709,8 @@ function updateCaptura() {
     data: {
       labels: labels,
       datasets: [
-        { type: 'bar', label: 'Peso Total (Toneladas)', data: weights, backgroundColor: 'rgba(97,18,50,0.7)', borderColor: '#611232', borderWidth: 1, yAxisID: 'y' },
-        { type: 'line', label: 'Valor Total (Millones MXP)', data: valores, borderColor: '#a57f2c', backgroundColor: 'rgba(165,127,44,0.1)', borderWidth: 2, pointRadius: 4, yAxisID: 'y1' }
+        { type: 'bar', label: 'Peso Total (Toneladas)', data: weights, backgroundColor: 'rgba(157,36,73,0.8)', borderColor: '#9D2449', borderWidth: 1, yAxisID: 'y' },
+        { type: 'line', label: 'Valor Total (Millones MXP)', data: valores, borderColor: '#B38E5D', backgroundColor: 'rgba(179,142,93,0.15)', borderWidth: 3, pointRadius: 5, yAxisID: 'y1' }
       ]
     },
     options: {
