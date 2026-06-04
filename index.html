@@ -81,14 +81,15 @@ td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
 .ficha-grid{display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:20px;}
 .ficha-card{background:#fff; border:1px solid var(--border); border-radius:8px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.04);}
 .ficha-card h4{color:var(--primary); border-bottom:2px solid #f0f0f0; padding-bottom:8px; margin-bottom:12px; font-size:15px; text-transform:uppercase; letter-spacing:0.5px;}
-.data-item{margin-bottom:10px; font-size:13.5px; line-height:1.5;}
+.data-item{margin-bottom:10px; font-size:13.5px; line-height:1.5; text-align:justify;}
 .data-item strong{color:#444; display:block; font-size:12px; text-transform:uppercase; color:var(--text2);}
 .data-item span{display:block; color:var(--text); margin-top:2px;}
 
-/* MAPA DENTRO DE FICHA */
-#map-ficha{height:300px; width:100%; border-radius:8px; border:1px solid var(--border); z-index:1; margin-top:10px;}
+/* MAPA Y GRAFICA DENTRO DE FICHA */
+#map-ficha{height:400px; width:100%; border-radius:0 0 8px 8px; z-index:1;}
+.chart-ficha-container{position: relative; height: 350px; width: 100%;}
 
-/* CAPTURA */
+/* CAPTURA GLOBAL */
 .chart-wrap{background:#fff;border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06); max-width: 900px; margin:0 auto;}
 select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-size:14px; min-width:300px; font-family:'Noto Sans';}
 
@@ -102,7 +103,7 @@ select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-s
   <div class="gob-main">
     <div class="gob-logo">IMIPAS</div>
     <div class="gob-subtitle">
-      Catálogo de recursos <span class="version-badge">v1.3</span>
+      Catálogo de recursos <span class="version-badge">v1.4</span>
     </div>
   </div>
 </header>
@@ -180,6 +181,7 @@ let map;
 let markerCluster;
 let capChart;
 let mapFichaInstance = null; 
+let chartFichaInstance = null;
 
 async function sincronizarGoogleSheets() {
   try {
@@ -327,11 +329,6 @@ function abrirFicha(valorComun) {
           ${renderDato('Origen', 'Origen', item)}
           ${renderDato('Mercado', 'Mercado', item)}
         </div>
-
-        <div style="margin-top: 24px;">
-            <h4 style="color:var(--primary); font-size:14px; text-transform:uppercase; margin-bottom:10px;">Distribución de UPAs para ${tituloPrincipal}</h4>
-            <div id="map-ficha"></div>
-        </div>
       </div>
     </div>
 
@@ -363,26 +360,26 @@ function abrirFicha(valorComun) {
       </div>
 
       <div class="ficha-card">
-        <h4>Sanidad y Manejo Ecosistémico</h4>
+        <h4>Sanidad y Comercialización</h4>
         ${renderDato('Importancia de sanidad', 'Importancia de la sanidad acuícola', item)}
         ${renderDato('Enfermedades reportadas', 'Enfermedades reportadas', item)}
         ${renderDato('Sanidad general', 'Sanidad', item)}
         ${renderDato('Buenas prácticas', 'Buenas prácticas de producción acuícola', item)}
-        ${renderDato('Manejo ecosistémico', 'MANEJO ECOSISTEMICO', item)}
-        ${renderDato('Efectos ambientales', 'Efectos ambientales y cambio climático', item)}
-      </div>
-
-      <div class="ficha-card">
-        <h4>Mercado y Comercialización</h4>
         ${renderDato('Comercialización', 'Comercialización', item)}
         ${renderDato('Presentación del producto', 'Presentación del producto', item)}
         ${renderDato('Precios', 'Precios del producto', item)}
         ${renderDato('Mercado del producto', 'Mercado del producto', item)}
+      </div>
+
+      <div class="ficha-card" style="grid-column: 1 / -1;">
+        <h4>Información Detallada</h4>
+        ${renderDato('Manejo ecosistémico', 'MANEJO ECOSISTEMICO', item)}
+        ${renderDato('Efectos ambientales', 'Efectos ambientales y cambio climático', item)}
         ${renderDato('Tecnología de alimentos', 'Tecnología de alimentos', item)}
       </div>
 
       <div class="ficha-card" style="grid-column: 1 / -1;">
-        <h4>Información Adicional</h4>
+        <h4>Información Institucional</h4>
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">
           <div>
             ${renderDato('Entidades de cultivo', 'ENTIDADES DE CULTIVO', item)}
@@ -397,6 +394,19 @@ function abrirFicha(valorComun) {
           </div>
         </div>
       </div>
+
+      <div class="ficha-card" style="grid-column: 1 / -1; padding:0; overflow:hidden;">
+        <h4 style="padding: 20px 20px 0 20px; border-bottom: none;">Distribución de UPAs para ${tituloPrincipal}</h4>
+        <div id="map-ficha"></div>
+      </div>
+
+      <div class="ficha-card" style="grid-column: 1 / -1;">
+        <h4>Datos Estadísticos de Captura</h4>
+        <div id="chart-ficha-wrapper" class="chart-ficha-container">
+           <canvas id="ficha-cap-chart"></canvas>
+        </div>
+      </div>
+
     </div>
   `;
 
@@ -404,7 +414,7 @@ function abrirFicha(valorComun) {
   document.getElementById('tab-ficha').style.display = 'block';
   window.scrollTo(0, 0);
 
-  // INICIALIZACIÓN DEL MAPA ESPECÍFICO DE LA FICHA
+  // INICIALIZACIÓN DEL MAPA DE LA FICHA
   setTimeout(() => {
     if(mapFichaInstance) {
       mapFichaInstance.remove();
@@ -419,7 +429,6 @@ function abrirFicha(valorComun) {
     datosCoordenadas.forEach(upa => {
       const comunUPA = upa['Común'] || '';
       if (comunUPA === valorComun) {
-        // CORRECCIÓN: Se agrega la búsqueda exacta de "Latitud", "Longitud" y "Logitud"
         const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
         const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
         
@@ -445,6 +454,51 @@ function abrirFicha(valorComun) {
     
     if (hayPuntos) {
       mapFichaInstance.fitBounds(clusterFicha.getBounds().pad(0.1));
+    }
+  }, 100);
+
+  // INICIALIZACIÓN DE LA GRÁFICA DE LA FICHA
+  setTimeout(() => {
+    if (chartFichaInstance) {
+        chartFichaInstance.destroy();
+    }
+
+    const datosFiltradosCap = datosCaptura.filter(item => item['Común'] === valorComun);
+    
+    if (datosFiltradosCap.length > 0) {
+        // Ordenamos por año (menor a mayor)
+        datosFiltradosCap.sort((a, b) => parseInt(a.anio || a.Año) - parseInt(b.anio || b.Año));
+        
+        const labels = datosFiltradosCap.map(d => d.anio || d.Año);
+        const dataKg = datosFiltradosCap.map(d => parseFloat(d.peso_kg || d.Peso) || 0);
+
+        const ctxFicha = document.getElementById('ficha-cap-chart').getContext('2d');
+        chartFichaInstance = new Chart(ctxFicha, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Captura (Kg)',
+                    data: dataKg,
+                    backgroundColor: 'rgba(97,18,50,0.2)',
+                    borderColor: '#611232',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#a57f2c',
+                    pointRadius: 4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Kilogramos' } },
+                    x: { title: { display: true, text: 'Año' } }
+                }
+            }
+        });
+    } else {
+        document.getElementById('chart-ficha-wrapper').innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:40px;">No hay historial estadístico de captura disponible para esta especie.</p>`;
     }
   }, 100);
 }
@@ -491,7 +545,6 @@ function renderMarcadores(filtroComun) {
     const comunUPA = upa['Común'] || '';
     if (filtroComun && comunUPA !== filtroComun) return;
 
-    // CORRECCIÓN: Se agrega la búsqueda exacta de "Latitud", "Longitud" y "Logitud"
     const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
     const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
     
