@@ -30,10 +30,11 @@
 body{font-family:'Noto Sans',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
 /* HEADER INSTITUCIONAL */
-.gob-header{background:var(--primary);color:#fff;text-align:center;}
+.gob-header{background:var(--primary);color:#fff;text-align:center; position:relative;}
 .gob-main{padding:24px 20px; display:flex; flex-direction:column; align-items:center; gap:8px;}
 .gob-logo{font-size:32px;font-weight:700;letter-spacing:-0.5px;}
-.gob-subtitle{font-size:18px; font-weight:500; opacity:.9;}
+.gob-subtitle{font-size:18px; font-weight:500; opacity:.9; display:flex; align-items:center; gap:10px; justify-content:center;}
+.version-badge{font-size:11px; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:12px; font-weight:600; letter-spacing:0.5px;}
 
 /* SUBNAV TABS */
 .subnav{background:var(--primary-dark);display:flex;overflow-x:auto; justify-content:center;}
@@ -47,7 +48,7 @@ body{font-family:'Noto Sans',Arial,sans-serif;background:var(--bg);color:var(--t
 .spinner {border: 4px solid rgba(0,0,0,.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: var(--primary); animation: spin 1s linear infinite; margin: 0 auto 15px;}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* MAPA */
+/* MAPA PRINCIPAL */
 #map{height:calc(100vh - 280px);width:100%; border-radius:8px; border:1px solid var(--border); z-index: 1;}
 
 /* TABLA EXPANDIBLE */
@@ -75,8 +76,7 @@ td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
 .ficha-img-box{flex:0 0 300px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#f8f9fa; text-align:center;}
 .ficha-img-box img{width:100%; height:auto; object-fit:cover; display:block;}
 .ficha-title-box{flex:1; min-width:300px;}
-.ficha-title-box h1{font-size:28px; color:var(--primary); margin-bottom:4px;}
-.ficha-title-box h3{font-size:18px; color:var(--text2); font-style:italic; font-weight:400; margin-bottom:16px;}
+.ficha-title-box h1{font-size:32px; color:var(--primary); margin-bottom:8px; text-transform:uppercase; letter-spacing:-0.5px;}
 
 .ficha-grid{display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:20px;}
 .ficha-card{background:#fff; border:1px solid var(--border); border-radius:8px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.04);}
@@ -84,6 +84,9 @@ td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
 .data-item{margin-bottom:10px; font-size:13.5px; line-height:1.5;}
 .data-item strong{color:#444; display:block; font-size:12px; text-transform:uppercase; color:var(--text2);}
 .data-item span{display:block; color:var(--text); margin-top:2px;}
+
+/* MAPA DENTRO DE FICHA */
+#map-ficha{height:300px; width:100%; border-radius:8px; border:1px solid var(--border); z-index:1; margin-top:10px;}
 
 /* CAPTURA */
 .chart-wrap{background:#fff;border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06); max-width: 900px; margin:0 auto;}
@@ -98,7 +101,9 @@ select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-s
 <header class="gob-header">
   <div class="gob-main">
     <div class="gob-logo">IMIPAS</div>
-    <div class="gob-subtitle">Catálogo de recursos</div>
+    <div class="gob-subtitle">
+      Catálogo de recursos <span class="version-badge">v1.2</span>
+    </div>
   </div>
 </header>
 
@@ -162,7 +167,6 @@ select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-s
 
 <footer class="gob-footer">
   <b>IMIPAS</b> – Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentable
-  <div style="margin-top: 8px; font-size: 11px; opacity: 0.6; letter-spacing: 1px;">v1.1</div>
 </footer>
 
 <script>
@@ -175,6 +179,7 @@ let datosFicha = [];
 let map;
 let markerCluster;
 let capChart;
+let mapFichaInstance = null; // Instancia independiente para el mapa de la Ficha Técnica
 
 async function sincronizarGoogleSheets() {
   try {
@@ -293,27 +298,40 @@ function abrirFicha(valorComun) {
   const item = { ...itemIndice, ...(itemFicha || {}) };
 
   const container = document.getElementById('ficha-container');
-  const nombreComun = item['Nombre común'] || item['Común'] || 'Especie sin nombre';
+  
+  // Título principal con la llave "Común"
+  const tituloPrincipal = item['Común'] || 'Especie';
+  const nombreComun = item['Nombre común'] || 'N/A';
   const nombreCientifico = item['Nombre científico'] || item['Especie'] || '';
   
   let imgUrl = item['Imagenspp'] || item['Foto de la especie'];
   let imgHTML = '';
   if(imgUrl && imgUrl.startsWith('http')) {
-    imgHTML = `<div class="ficha-img-box"><img src="${imgUrl}" alt="${nombreComun}"></div>`;
+    imgHTML = `<div class="ficha-img-box"><img src="${imgUrl}" alt="${tituloPrincipal}"></div>`;
   }
 
   container.innerHTML = `
     <div class="ficha-header">
       ${imgHTML}
       <div class="ficha-title-box">
-        <h1>${nombreComun}</h1>
-        <h3>${nombreCientifico}</h3>
+        <h1>${tituloPrincipal}</h1>
         
-        <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:20px;">
+        <div style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+          <strong style="color:var(--primary); font-size:13px; text-transform:uppercase;">Nombre Común</strong>
+          <span style="font-size:18px; display:block; color:var(--text); font-weight:500; margin-top:2px;">${nombreComun}</span>
+          <em style="color:var(--text2); font-size:15px; display:block; margin-top:4px;">${nombreCientifico}</em>
+        </div>
+        
+        <div style="display:flex; gap:20px; flex-wrap:wrap; background:#f8f9fa; padding:16px; border-radius:8px; border:1px solid var(--border);">
           ${renderDato('Estatus del cultivo', 'Estatus del cultivo', item)}
           ${renderDato('Nivel de dominio biotecnológico', 'Nivel de dominio de la biotecnología', item)}
           ${renderDato('Origen', 'Origen', item)}
           ${renderDato('Mercado', 'Mercado', item)}
+        </div>
+
+        <div style="margin-top: 24px;">
+            <h4 style="color:var(--primary); font-size:14px; text-transform:uppercase; margin-bottom:10px;">Distribución de UPAs para ${tituloPrincipal}</h4>
+            <div id="map-ficha"></div>
         </div>
       </div>
     </div>
@@ -386,6 +404,49 @@ function abrirFicha(valorComun) {
   document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
   document.getElementById('tab-ficha').style.display = 'block';
   window.scrollTo(0, 0);
+
+  // INICIALIZACIÓN DEL MAPA ESPECÍFICO DE LA FICHA
+  setTimeout(() => {
+    if(mapFichaInstance) {
+      mapFichaInstance.remove();
+    }
+    
+    mapFichaInstance = L.map('map-ficha').setView([23.6345, -102.5528], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mapFichaInstance);
+    
+    const clusterFicha = L.markerClusterGroup();
+    let hayPuntos = false;
+
+    datosCoordenadas.forEach(upa => {
+      const comunUPA = upa['Común'] || '';
+      if (comunUPA === valorComun) {
+        const lat = parseFloat(upa['LATITUD F'] || upa['latitud']);
+        const lng = parseFloat(upa['LONGITD F'] || upa['longitud']);
+        
+        if(!isNaN(lat) && !isNaN(lng)) {
+          hayPuntos = true;
+          const marker = L.marker([lat, lng]);
+          marker.bindPopup(`
+            <div style="font-family:'Noto Sans'; font-size:13px;">
+              <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">
+                ${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}
+              </h4>
+              <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || comunUPA}</p>
+              <p style="margin-bottom:4px;"><b>Superficie (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
+              <p style="margin-bottom:0;"><b>Tipo de instalación:</b> ${upa['Tipo de instalación'] || 'N/A'}</p>
+            </div>
+          `);
+          clusterFicha.addLayer(marker);
+        }
+      }
+    });
+
+    mapFichaInstance.addLayer(clusterFicha);
+    
+    if (hayPuntos) {
+      mapFichaInstance.fitBounds(clusterFicha.getBounds().pad(0.1));
+    }
+  }, 100);
 }
 
 function cerrarFicha() {
@@ -393,7 +454,7 @@ function cerrarFicha() {
   document.getElementById('tab-especies').style.display = 'block';
 }
 
-// --- MAPA ---
+// --- MAPA PRINCIPAL ---
 function initMap() {
   map = L.map('map').setView([23.6345, -102.5528], 5);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
