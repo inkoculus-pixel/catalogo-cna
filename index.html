@@ -102,7 +102,7 @@ select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-s
   <div class="gob-main">
     <div class="gob-logo">IMIPAS</div>
     <div class="gob-subtitle">
-      Catálogo de recursos <span class="version-badge">v1.2</span>
+      Catálogo de recursos <span class="version-badge">v1.3</span>
     </div>
   </div>
 </header>
@@ -179,7 +179,7 @@ let datosFicha = [];
 let map;
 let markerCluster;
 let capChart;
-let mapFichaInstance = null; // Instancia independiente para el mapa de la Ficha Técnica
+let mapFichaInstance = null; 
 
 async function sincronizarGoogleSheets() {
   try {
@@ -299,7 +299,6 @@ function abrirFicha(valorComun) {
 
   const container = document.getElementById('ficha-container');
   
-  // Título principal con la llave "Común"
   const tituloPrincipal = item['Común'] || 'Especie';
   const nombreComun = item['Nombre común'] || 'N/A';
   const nombreCientifico = item['Nombre científico'] || item['Especie'] || '';
@@ -420,8 +419,9 @@ function abrirFicha(valorComun) {
     datosCoordenadas.forEach(upa => {
       const comunUPA = upa['Común'] || '';
       if (comunUPA === valorComun) {
-        const lat = parseFloat(upa['LATITUD F'] || upa['latitud']);
-        const lng = parseFloat(upa['LONGITD F'] || upa['longitud']);
+        // CORRECCIÓN: Se agrega la búsqueda exacta de "Latitud", "Longitud" y "Logitud"
+        const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
+        const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
         
         if(!isNaN(lat) && !isNaN(lng)) {
           hayPuntos = true;
@@ -491,8 +491,9 @@ function renderMarcadores(filtroComun) {
     const comunUPA = upa['Común'] || '';
     if (filtroComun && comunUPA !== filtroComun) return;
 
-    const lat = parseFloat(upa['LATITUD F'] || upa['latitud']);
-    const lng = parseFloat(upa['LONGITD F'] || upa['longitud']);
+    // CORRECCIÓN: Se agrega la búsqueda exacta de "Latitud", "Longitud" y "Logitud"
+    const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
+    const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
     
     if(!isNaN(lat) && !isNaN(lng)) {
       const marker = L.marker([lat, lng]);
