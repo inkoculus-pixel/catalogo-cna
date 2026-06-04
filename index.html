@@ -103,7 +103,7 @@ select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-s
   <div class="gob-main">
     <div class="gob-logo">IMIPAS</div>
     <div class="gob-subtitle">
-      Catálogo de recursos <span class="version-badge">v1.4</span>
+      Catálogo de recursos <span class="version-badge">v1.5</span>
     </div>
   </div>
 </header>
@@ -333,6 +333,12 @@ function abrirFicha(valorComun) {
     </div>
 
     <div class="ficha-grid">
+      
+      <div class="ficha-card" style="grid-column: 1 / -1; padding:0; overflow:hidden;">
+        <h4 style="padding: 20px 20px 0 20px; border-bottom: none;">Distribución de UPAs para ${tituloPrincipal}</h4>
+        <div id="map-ficha"></div>
+      </div>
+
       <div class="ficha-card">
         <h4>Biología y Ecología</h4>
         ${renderDato('Distribución geográfica', 'Distribución geográfica', item)}
@@ -395,11 +401,6 @@ function abrirFicha(valorComun) {
         </div>
       </div>
 
-      <div class="ficha-card" style="grid-column: 1 / -1; padding:0; overflow:hidden;">
-        <h4 style="padding: 20px 20px 0 20px; border-bottom: none;">Distribución de UPAs para ${tituloPrincipal}</h4>
-        <div id="map-ficha"></div>
-      </div>
-
       <div class="ficha-card" style="grid-column: 1 / -1;">
         <h4>Datos Estadísticos de Captura</h4>
         <div id="chart-ficha-wrapper" class="chart-ficha-container">
@@ -457,7 +458,7 @@ function abrirFicha(valorComun) {
     }
   }, 100);
 
-  // INICIALIZACIÓN DE LA GRÁFICA DE LA FICHA
+  // INICIALIZACIÓN DE LA GRÁFICA DE LA FICHA (CON SUMA AGRUPADA POR AÑO)
   setTimeout(() => {
     if (chartFichaInstance) {
         chartFichaInstance.destroy();
@@ -466,11 +467,26 @@ function abrirFicha(valorComun) {
     const datosFiltradosCap = datosCaptura.filter(item => item['Común'] === valorComun);
     
     if (datosFiltradosCap.length > 0) {
-        // Ordenamos por año (menor a mayor)
-        datosFiltradosCap.sort((a, b) => parseInt(a.anio || a.Año) - parseInt(b.anio || b.Año));
+        // Objeto para almacenar la suma de kilos por cada año
+        const agregadosPorAno = {};
         
-        const labels = datosFiltradosCap.map(d => d.anio || d.Año);
-        const dataKg = datosFiltradosCap.map(d => parseFloat(d.peso_kg || d.Peso) || 0);
+        datosFiltradosCap.forEach(d => {
+            const year = d['AÑO'] || d['Año'] || d['anio'];
+            // Buscamos PESO VIVO (KG) o respaldos
+            const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
+            
+            if (year) {
+                if (!agregadosPorAno[year]) {
+                    agregadosPorAno[year] = 0;
+                }
+                agregadosPorAno[year] += peso; // Sumamos los kilogramos
+            }
+        });
+
+        // Ordenamos las llaves de los años de menor a mayor
+        const labels = Object.keys(agregadosPorAno).sort((a, b) => parseInt(a) - parseInt(b));
+        // Mapeamos los años ordenados para obtener su respectiva suma total
+        const dataKg = labels.map(year => agregadosPorAno[year]);
 
         const ctxFicha = document.getElementById('ficha-cap-chart').getContext('2d');
         chartFichaInstance = new Chart(ctxFicha, {
@@ -478,7 +494,7 @@ function abrirFicha(valorComun) {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Captura (Kg)',
+                    label: 'Captura Total Anual (Kg)',
                     data: dataKg,
                     backgroundColor: 'rgba(97,18,50,0.2)',
                     borderColor: '#611232',
@@ -492,7 +508,7 @@ function abrirFicha(valorComun) {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Kilogramos' } },
+                    y: { beginAtZero: true, title: { display: true, text: 'Kilogramos Totales' } },
                     x: { title: { display: true, text: 'Año' } }
                 }
             }
@@ -567,7 +583,7 @@ function renderMarcadores(filtroComun) {
   });
 }
 
-// --- GRÁFICAS DE CAPTURA ---
+// --- GRÁFICAS DE CAPTURA GLOBAL ---
 function initCaptura() {
   const select = document.getElementById('cap-select');
   const seenComun = new Set();
@@ -592,11 +608,24 @@ function updateCaptura() {
   if (!comunSel) return;
 
   const datosFiltrados = datosCaptura.filter(item => item['Común'] === comunSel);
-  datosFiltrados.sort((a, b) => (a.anio || a.Año) - (b.anio || b.Año));
+  
+  // Agrupamos la suma de peso y valor por cada año también en la gráfica global
+  const agregados = {};
+  datosFiltrados.forEach(d => {
+      const year = d['AÑO'] || d['Año'] || d['anio'];
+      const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
+      const valor = parseFloat(d['VALOR (PESOS)'] || d['valor_pesos'] || d['Valor']) || 0;
+      
+      if(year) {
+          if(!agregados[year]) agregados[year] = { peso: 0, valor: 0 };
+          agregados[year].peso += peso;
+          agregados[year].valor += valor;
+      }
+  });
 
-  const labels = datosFiltrados.map(d => d.anio || d.Año);
-  const weights = datosFiltrados.map(d => Math.round((d.peso_kg || d.Peso) / 1000) || 0); 
-  const valores = datosFiltrados.map(d => Math.round((d.valor_pesos || d.Valor) / 1000000) || 0);
+  const labels = Object.keys(agregados).sort((a,b) => parseInt(a) - parseInt(b));
+  const weights = labels.map(y => Math.round(agregados[y].peso / 1000) || 0); // Convertimos a Toneladas
+  const valores = labels.map(y => Math.round(agregados[y].valor / 1000000) || 0); // Convertimos a Millones MXP
 
   if (capChart) capChart.destroy();
   const ctx = document.getElementById('cap-chart').getContext('2d');
@@ -606,8 +635,8 @@ function updateCaptura() {
     data: {
       labels: labels,
       datasets: [
-        { type: 'bar', label: 'Peso (Toneladas)', data: weights, backgroundColor: 'rgba(97,18,50,0.7)', borderColor: '#611232', borderWidth: 1, yAxisID: 'y' },
-        { type: 'line', label: 'Valor (Millones MXP)', data: valores, borderColor: '#a57f2c', backgroundColor: 'rgba(165,127,44,0.1)', borderWidth: 2, pointRadius: 4, yAxisID: 'y1' }
+        { type: 'bar', label: 'Peso Total (Toneladas)', data: weights, backgroundColor: 'rgba(97,18,50,0.7)', borderColor: '#611232', borderWidth: 1, yAxisID: 'y' },
+        { type: 'line', label: 'Valor Total (Millones MXP)', data: valores, borderColor: '#a57f2c', backgroundColor: 'rgba(165,127,44,0.1)', borderWidth: 2, pointRadius: 4, yAxisID: 'y1' }
       ]
     },
     options: {
