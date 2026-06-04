@@ -67,7 +67,7 @@ td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border)}
 .link-especie{color:var(--primary); text-decoration:none; font-weight:700; cursor:pointer;}
 .link-especie:hover{text-decoration:underline; color:var(--secondary);}
 
-/* FICHA TÉCNICA (NUEVO) */
+/* FICHA TÉCNICA */
 .btn-back{background:#f8f9fa; border:1px solid var(--border); padding:8px 16px; border-radius:6px; cursor:pointer; font-family:'Noto Sans'; font-weight:600; color:var(--text); margin-bottom:20px; display:inline-flex; align-items:center;}
 .btn-back:hover{background:#e9ecef;}
 
@@ -162,6 +162,7 @@ select{padding:10px 14px;border:1px solid var(--border);border-radius:6px;font-s
 
 <footer class="gob-footer">
   <b>IMIPAS</b> – Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentable
+  <div style="margin-top: 8px; font-size: 11px; opacity: 0.6; letter-spacing: 1px;">v1.1</div>
 </footer>
 
 <script>
@@ -170,6 +171,7 @@ const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
 let datosIndice = [];
 let datosCoordenadas = [];
 let datosCaptura = [];
+let datosFicha = []; 
 let map;
 let markerCluster;
 let capChart;
@@ -179,14 +181,20 @@ async function sincronizarGoogleSheets() {
     const urlIndice = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=indice`;
     const urlCoordenadas = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=coordenadas`;
     const urlCaptura = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=captura`;
+    const urlFicha = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Datos%20de%20ficha`; 
 
-    const [resIndice, resCoord, resCaptura] = await Promise.all([
-      fetch(urlIndice), fetch(urlCoordenadas), fetch(urlCaptura).catch(() => null)
+    const [resIndice, resCoord, resCaptura, resFicha] = await Promise.all([
+      fetch(urlIndice), 
+      fetch(urlCoordenadas), 
+      fetch(urlCaptura).catch(() => null),
+      fetch(urlFicha).catch(() => null)
     ]);
 
     datosIndice = Papa.parse(await resIndice.text(), { header: true, skipEmptyLines: true }).data;
     datosCoordenadas = Papa.parse(await resCoord.text(), { header: true, skipEmptyLines: true }).data;
+    
     if(resCaptura && resCaptura.ok) datosCaptura = Papa.parse(await resCaptura.text(), { header: true, skipEmptyLines: true }).data;
+    if(resFicha && resFicha.ok) datosFicha = Papa.parse(await resFicha.text(), { header: true, skipEmptyLines: true }).data;
 
     document.getElementById('loader').style.display = 'none';
     document.getElementById('menu').style.display = 'flex';
@@ -197,6 +205,7 @@ async function sincronizarGoogleSheets() {
 
   } catch (error) {
     document.getElementById('loader').innerHTML = `<p style="color:var(--primary)">Error al conectar con la base de datos.</p>`;
+    console.error(error);
   }
 }
 
@@ -215,14 +224,15 @@ function renderTabla(datos) {
   const tbody = document.getElementById('esp-tbody');
   tbody.innerHTML = '';
   
-  datos.forEach((item, index) => {
-    const nombreComun = item['Nombre común'] || item['Nombre comun'] || 'Sin nombre';
+  datos.forEach((item) => {
+    const valorComun = item['Común'] || '';
+    const displayNombre = item['Nombre común'] || valorComun || 'Sin nombre';
+    
     const tr = document.createElement('tr');
     tr.className = 'main-row';
     
-    // Clic en la fila (excepto en el enlace) para expandir resumen
     tr.onclick = (e) => {
-      if(e.target.tagName.toLowerCase() === 'a') return; // Si hace clic en el enlace, no expande
+      if(e.target.tagName.toLowerCase() === 'a') return; 
       const isHidden = trDetails.style.display === 'none' || trDetails.style.display === '';
       trDetails.style.display = isHidden ? 'table-row' : 'none';
       tr.style.background = isHidden ? '#f8f0f2' : '';
@@ -230,8 +240,8 @@ function renderTabla(datos) {
 
     tr.innerHTML = `
       <td>${item['Recurso'] || ''}</td>
-      <td><a class="link-especie" onclick="abrirFicha(${index})">${nombreComun}</a></td>
-      <td><em>${item['Especie'] || item['Especie Científica'] || item['Nombre científico'] || ''}</em></td>
+      <td><a class="link-especie" data-comun="${valorComun}" onclick="abrirFicha(this.getAttribute('data-comun'))">${displayNombre}</a></td>
+      <td><em>${item['Especie'] || item['Nombre científico'] || ''}</em></td>
       <td>${item['Litoral'] || ''}</td>
     `;
     
@@ -272,20 +282,20 @@ function filtrarTabla() {
 
 // --- FICHA TÉCNICA DINÁMICA ---
 function renderDato(label, key, item) {
-  // Busca posibles variaciones de nombres de columnas (con o sin dos puntos)
   const val = item[key] || item[key + ':'] || '';
   if (!val || val.trim() === '') return '';
   return `<div class="data-item"><strong>${label}</strong><span>${val}</span></div>`;
 }
 
-function abrirFicha(index) {
-  const item = datosIndice[index];
+function abrirFicha(valorComun) {
+  const itemFicha = datosFicha.find(d => d['Común'] === valorComun);
+  const itemIndice = datosIndice.find(d => d['Común'] === valorComun) || {};
+  const item = { ...itemIndice, ...(itemFicha || {}) };
+
   const container = document.getElementById('ficha-container');
-  
   const nombreComun = item['Nombre común'] || item['Común'] || 'Especie sin nombre';
   const nombreCientifico = item['Nombre científico'] || item['Especie'] || '';
   
-  // Extraer URL de la imagen
   let imgUrl = item['Imagenspp'] || item['Foto de la especie'];
   let imgHTML = '';
   if(imgUrl && imgUrl.startsWith('http')) {
@@ -373,7 +383,6 @@ function abrirFicha(index) {
     </div>
   `;
 
-  // Cambiar pestaña sin alterar el menú
   document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
   document.getElementById('tab-ficha').style.display = 'block';
   window.scrollTo(0, 0);
@@ -392,9 +401,20 @@ function initMap() {
   map.addLayer(markerCluster);
 
   const selectMap = document.getElementById('map-esp-select');
-  const especiesUnicas = [...new Set(datosCoordenadas.map(item => item['Especie'] || item['especie']))].filter(Boolean).sort();
-  especiesUnicas.forEach(esp => {
-    selectMap.appendChild(new Option(esp, esp));
+  const seenComun = new Set();
+  const options = [];
+
+  datosCoordenadas.forEach(item => {
+    const comun = item['Común'];
+    if(comun && !seenComun.has(comun)) {
+      seenComun.add(comun);
+      const display = item['Nombre común'] || item['Común']; 
+      options.push({ value: comun, text: display });
+    }
+  });
+
+  options.sort((a,b) => a.text.localeCompare(b.text)).forEach(opt => {
+    selectMap.appendChild(new Option(opt.text, opt.value));
   });
 
   renderMarcadores("");
@@ -404,11 +424,11 @@ function filtrarMapa() {
   renderMarcadores(document.getElementById('map-esp-select').value);
 }
 
-function renderMarcadores(filtroEspecie) {
+function renderMarcadores(filtroComun) {
   markerCluster.clearLayers();
   datosCoordenadas.forEach(upa => {
-    const especieUPA = upa['Especie'] || upa['especie'] || '';
-    if (filtroEspecie && especieUPA !== filtroEspecie) return;
+    const comunUPA = upa['Común'] || '';
+    if (filtroComun && comunUPA !== filtroComun) return;
 
     const lat = parseFloat(upa['LATITUD F'] || upa['latitud']);
     const lng = parseFloat(upa['LONGITD F'] || upa['longitud']);
@@ -420,7 +440,7 @@ function renderMarcadores(filtroEspecie) {
           <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">
             ${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}
           </h4>
-          <p style="margin-bottom:4px;"><b>Especie:</b> ${especieUPA}</p>
+          <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || comunUPA}</p>
           <p style="margin-bottom:4px;"><b>Superficie de producción (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
           <p style="margin-bottom:4px;"><b>Número de cuerpos de agua:</b> ${upa['Número de cuerpos de agua'] || 'N/A'}</p>
           <p style="margin-bottom:4px;"><b>Función zootécnica:</b> ${upa['Función zootécnica'] || 'N/A'}</p>
@@ -435,17 +455,28 @@ function renderMarcadores(filtroEspecie) {
 // --- GRÁFICAS DE CAPTURA ---
 function initCaptura() {
   const select = document.getElementById('cap-select');
-  const especiesUnicas = [...new Set(datosCaptura.map(item => item.Especie || item.especie))];
-  especiesUnicas.forEach(esp => {
-    if(esp) select.appendChild(new Option(esp, esp));
+  const seenComun = new Set();
+  const options = [];
+
+  datosCaptura.forEach(item => {
+    const comun = item['Común'];
+    if(comun && !seenComun.has(comun)) {
+      seenComun.add(comun);
+      const display = item['Nombre común'] || item['Común'];
+      options.push({ value: comun, text: display });
+    }
+  });
+
+  options.sort((a,b) => a.text.localeCompare(b.text)).forEach(opt => {
+    select.appendChild(new Option(opt.text, opt.value));
   });
 }
 
 function updateCaptura() {
-  const especieSel = document.getElementById('cap-select').value;
-  if (!especieSel) return;
+  const comunSel = document.getElementById('cap-select').value;
+  if (!comunSel) return;
 
-  const datosFiltrados = datosCaptura.filter(item => (item.Especie || item.especie) === especieSel);
+  const datosFiltrados = datosCaptura.filter(item => item['Común'] === comunSel);
   datosFiltrados.sort((a, b) => (a.anio || a.Año) - (b.anio || b.Año));
 
   const labels = datosFiltrados.map(d => d.anio || d.Año);
