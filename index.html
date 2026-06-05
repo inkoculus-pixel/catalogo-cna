@@ -19,15 +19,23 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* PALETA OFICIAL GOB.MX */
-  --gob-green: #13322B;
-  --primary: #9D2449; /* Guinda */
-  --primary-dark: #7A1C39;
-  --secondary: #B38E5D; /* Dorado */
-  --bg:#ffffff; /* Fondo modificado a blanco puro */
-  --border:#dee2e6;
-  --text:#212529;
-  --text2:#6c757d;
+  /* NUEVA PALETA DE COLORES OFICIAL */
+  --gob-green: #002f2a;
+  --verde-claro: #1e5b4f;
+  
+  --primary: #9b2247; 
+  --primary-dark: #611232;
+  
+  --secondary: #a57f2c; 
+  --dorado-claro: #e6d194;
+  
+  --azul: #33508d;
+  
+  --text: #161a1d;
+  --text2: #98989A;
+  
+  --bg: #ffffff; 
+  --border: rgba(152, 152, 154, 0.4); /* Basado en #98989A para mantener sutileza en tablas */
 }
 body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh;}
 
@@ -151,7 +159,7 @@ th{padding:14px 16px;text-align:left;font-size:13px;font-weight:600; text-transf
 td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-family:'Noto Sans', sans-serif;}
 
 .main-row{transition: background 0.2s; cursor: pointer;}
-.main-row:hover{background:#f8f0f2;}
+.main-row:hover{background:#fafafa;}
 .details-row{display:none; background:#fafafa;}
 .details-content{padding:16px 20px; border-left:4px solid var(--primary); color:var(--text2); font-size:13px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;}
 
@@ -174,7 +182,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 .ficha-card{background:#fff; border:1px solid var(--border); border-radius:8px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.05);}
 .ficha-card h4{color:var(--primary); border-bottom:2px solid #f0f0f0; padding-bottom:10px; margin-bottom:16px; font-size:16px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;}
 .data-item{margin-bottom:12px; font-size:14px; line-height:1.6; text-align:justify; font-family:'Noto Sans', sans-serif;}
-.data-item strong{color:#444; display:block; font-size:12px; text-transform:uppercase; color:var(--text2); font-family:'Montserrat', sans-serif;}
+.data-item strong{display:block; font-size:12px; text-transform:uppercase; color:var(--text2); font-family:'Montserrat', sans-serif;}
 .data-item span{display:block; color:var(--text); margin-top:2px;}
 
 #map-ficha{height:400px; width:100%; border-radius:0 0 8px 8px; z-index:1;}
@@ -184,21 +192,15 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 .chart-wrap{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); overflow: hidden;}
 .chart-container-box { padding: 20px; position: relative; min-height: 260px; }
 
-/* FOOTER GOB.MX OFICIAL */
+/* FOOTER GOB.MX OFICIAL MODIFICADO */
 .gobmx-footer {
   background-color: var(--gob-green);
-  color: #fff;
-  padding: 40px 5% 60px 5%;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 40px;
+  height: 60px;
   background-image: url('https://framework-gb.cdn.gob.mx/landing/img/pleca.svg');
   background-repeat: repeat-x;
   background-position: bottom;
   margin-top: 60px;
 }
-.gobmx-footer h3 { font-size: 16px; margin-bottom: 20px; font-weight: 700; color: #fff; }
-.gobmx-footer p { font-size: 14px; color: #d1d5d8; text-decoration: none; line-height: 1.6; display:block; margin-bottom:10px; font-family:'Noto Sans', sans-serif;}
 </style>
 </head>
 <body>
@@ -209,7 +211,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v2.5</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v2.6</span></h2>
 </header>
 
 <div id="loader">
@@ -263,41 +265,21 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 </div>
 
 <footer class="gobmx-footer">
-  <div>
-    <p><b>IMIPAS</b></p>
-    <p>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</p>
-  </div>
-  <div>
-    <h3>¿Qué es gob.mx?</h3>
-    <p>Es el portal único de trámites, información y participación ciudadana.</p>
-  </div>
-  <div>
-    <h3>Contacto</h3>
-    <p>Mesa de ayuda: dudas e información</p>
-    <p>gobmx@funcionpublica.gob.mx</p>
-    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 2.5</p>
-  </div>
-</footer>
+  </footer>
 
 <script>
 /**
  * HISTORIAL DE CAMBIOS (RNIIPA)
  * -------------------------------------------------------------------------
+ * v2.6 - 2026-06-05:
+ * - Aplicación estricta de la nueva paleta de colores institucionales.
+ * - Eliminación del texto del footer conservando la decoración gráfica.
  * v2.5 - 2026-06-05:
- * - Búsqueda global cruzada: el filtro ahora busca coincidencias compartidas entre 
- * "Zona", "Estado" y "ENTIDAD". Al buscar un estado (ej. Baja California) se reflejan
- * exclusivamente especies, coordenadas y datos de captura vinculados a ese lugar.
- * - Modificación de la gráfica de barras para agrupar dinámicamente: muestra únicamente 
- * el Top 5 de entidades con mayor peso, agrupando el resto bajo la categoría "Otros".
- * - Ajuste de diseño y correcciones solicitadas: fondo de aplicación en blanco puro y
- * actualización del encabezado a "Catálogo de recursos".
+ * - Búsqueda global cruzada y agrupación top 5 en gráficos.
+ * - Fondo de aplicación en blanco puro.
  * v2.4 - 2026-06-05:
- * - Eliminación definitiva del valor comercial en pesos de las gráficas globales.
- * - Re-arquitectura de la gráfica principal a barras apiladas segmentadas por "ENTIDAD".
- * - Filtro restrictivo en hipervínculos de tabla: solo son cliqueables si poseen campo "Común".
- * v2.3 - Sincronización robusta de componentes dinámicos en una arquitectura SPA de vista única.
- * v2.2 - Ajuste dinámico de ejes en Chart.js para omitir años sin registros numéricos de captura.
- * v2.1 - Sanitización de strings en columnas financieras de Google Sheets.
+ * - Eliminación del valor comercial y rearquitectura de gráfica.
+ * v2.3 - Sincronización robusta de componentes dinámicos en SPA.
  */
 
 const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
@@ -365,7 +347,7 @@ function renderTabla(datos) {
       if(e.target.tagName.toLowerCase() === 'a') return; 
       const isHidden = trDetails.style.display === 'none' || trDetails.style.display === '';
       trDetails.style.display = isHidden ? 'table-row' : 'none';
-      tr.style.background = isHidden ? '#f8f0f2' : '';
+      tr.style.background = isHidden ? 'rgba(155, 34, 71, 0.05)' : '';
     };
 
     let nombreCeldaHTML = '';
@@ -410,7 +392,6 @@ function filtrarDashboardGlobal() {
   
   const comunesQueHacenMatch = new Set();
 
-  // Buscar el término en las 3 bases de datos y recolectar los campos 'Común' relacionados
   datosIndice.forEach(item => { if(matchesFiltro(item, input)) comunesQueHacenMatch.add(item['Común']); });
   datosCoordenadas.forEach(item => { if(matchesFiltro(item, input)) comunesQueHacenMatch.add(item['Común']); });
   datosCaptura.forEach(item => { if(matchesFiltro(item, input)) comunesQueHacenMatch.add(item['Común']); });
@@ -450,8 +431,6 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
       const indiceRow = datosIndice.find(i => i['Común'] === comunUPA) || {};
       const speciesMatched = matchesFiltro(indiceRow, input);
 
-      // Si hay un filtro y la coordenada específica no hace match y la especie en sí no hizo match
-      // ignoramos este punto. Esto logra que al buscar "Baja California" solo se vean puntos ahí.
       if (input && !matchesFiltro(upa, input) && !speciesMatched) {
         return;
       }
@@ -486,11 +465,8 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
 }
 
 function generarColorPorPaleta(index, total) {
-  const hues = [345, 42, 165, 200, 280, 20, 120, 310];
-  const hue = hues[index % hues.length];
-  const saturation = 60 + (index % 3) * 10;
-  const lightness = 40 + (index % 2) * 10;
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  const hexColors = ['#9b2247', '#1e5b4f', '#a57f2c', '#33508d', '#611232'];
+  return hexColors[index % hexColors.length];
 }
 
 function actualizarGraficaConsolidada(comunesValidos, input = '') {
@@ -550,7 +526,6 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
 
   const labelsAnos = Array.from(añosSet).sort((a, b) => parseInt(a) - parseInt(b));
 
-  // LÓGICA DE TOP 5 + OTROS
   const entidadesOrdenadas = Object.keys(totalesPorEntidad).sort((a, b) => totalesPorEntidad[b] - totalesPorEntidad[a]);
   const top5 = entidadesOrdenadas.slice(0, 5);
   const otros = entidadesOrdenadas.slice(5);
@@ -568,10 +543,10 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
       } else {
         if (matrizDatos[year] && matrizDatos[year][entidad]) suma = matrizDatos[year][entidad];
       }
-      return Math.round(suma / 1000); // Conversión a Toneladas
+      return Math.round(suma / 1000); 
     });
 
-    const bgColor = entidad === 'Otros' ? '#95a5a6' : generarColorPorPaleta(idx, top5.length);
+    const bgColor = entidad === 'Otros' ? '#98989A' : generarColorPorPaleta(idx, top5.length);
 
     return {
       label: entidad,
@@ -605,7 +580,7 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
         legend: {
           display: true,
           position: 'bottom',
-          labels: { boxWidth: 12, font: { size: 11, family: 'Noto Sans' } }
+          labels: { boxWidth: 12, font: { size: 11, family: 'Noto Sans' }, color: '#161a1d' }
         }
       }
     }
@@ -785,8 +760,8 @@ function abrirFicha(valorComun) {
                 datasets: [{
                     label: 'Captura Anual (Kg)',
                     data: dataKg,
-                    backgroundColor: 'rgba(157,36,73,0.15)',
-                    borderColor: '#9D2449',
+                    backgroundColor: 'rgba(155, 34, 71, 0.15)',
+                    borderColor: '#9b2247',
                     borderWidth: 2,
                     fill: true
                 }]
