@@ -208,7 +208,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Micrositio RNIIPA - Tablero Unificado de Control <span class="version-badge">v1.9</span></h2>
+  <h2>Micrositio RNIIPA - Tablero Unificado de Control <span class="version-badge">v2.3</span></h2>
 </header>
 
 <div id="loader">
@@ -274,7 +274,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
     <h3>Contacto</h3>
     <p>Mesa de ayuda: dudas e información</p>
     <p>gobmx@funcionpublica.gob.mx</p>
-    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 1.9</p>
+    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 2.3</p>
   </div>
 </footer>
 
@@ -282,12 +282,11 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 /**
  * HISTORIAL DE CAMBIOS (RNIIPA)
  * -------------------------------------------------------------------------
- * v1.9 - 2026-06-05:
- * - Rediseño total a arquitectura de Dashboard en una sola página sin tabs.
- * - Buscador maestro unificado: Filtra simultáneamente el catálogo, el mapa y re-calcula las gráficas de captura.
- * - Control estricto de excepciones: Despliega leyendas "Sin registro" claras si no hay datos coincidentes.
- * v1.8 - Optimización preventiva en renders.
- * v1.7 - Versión base con maquetación gob.mx.
+ * v2.3 - 2026-06-05:
+ * - Entrega consolidada del código fuente completo bajo requerimiento del operador.
+ * - Sincronización robusta de componentes dinámicos en una arquitectura SPA de vista única.
+ * v2.2 - Ajuste dinámico de ejes en Chart.js para omitir años sin registros numéricos de captura.
+ * v2.1 - Sanitización de strings en columnas financieras de Google Sheets.
  */
 
 const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
@@ -386,7 +385,6 @@ function renderTabla(datos) {
 function filtrarDashboardGlobal() {
   const input = document.getElementById("search-esp").value.toLowerCase();
   
-  // 1. Encontrar los elementos que pasan el filtro de búsqueda
   const itemsFiltrados = datosIndice.filter(item => {
     const txtRecurso = (item['Recurso'] || '').toLowerCase();
     const txtComun = (item['Común'] || '').toLowerCase();
@@ -400,16 +398,9 @@ function filtrarDashboardGlobal() {
            txtZona.includes(input) || txtLitoral.includes(input);
   });
 
-  // 2. Renderizar la tabla con el subconjunto
   renderTabla(itemsFiltrados);
-
-  // 3. Obtener lista de llaves de relación "Común" válidas
   const comunesActivos = itemsFiltrados.map(item => item['Común']).filter(c => c);
-
-  // 4. Actualizar Mapa Dinámicamente
   renderMarcadoresGlobales(comunesActivos);
-
-  // 5. Re-calcular estadísticas consolidadas de captura en tiempo real
   actualizarGraficaConsolidada(comunesActivos);
 }
 
@@ -477,25 +468,42 @@ function actualizarGraficaConsolidada(comunesValidos) {
     return;
   }
 
-  // Restaurar canvas si fue removido por el estado vacío
   container.innerHTML = `<canvas id="cap-chart" height="180"></canvas>`;
 
   const agregados = {};
   datosFiltrados.forEach(d => {
-    const year = d['AÑO'] || d['Año'] || d['anio'];
-    const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
-    const valor = parseFloat(d['VALOR (PESOS)'] || d['valor_pesos'] || d['Valor']) || 0;
-    
-    if(year) {
-      if(!agregados[year]) agregados[year] = { peso: 0, valor: 0 };
-      agregados[year].peso += peso;
-      agregados[year].valor += valor;
+    const year = (d['AÑO'] || d['Año'] || d['anio'] || '').toString().trim();
+    if (!year) return;
+
+    let rawPeso = d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso'] || '';
+    let rawValor = d['VALOR (PESOS)'] || d['valor_pesos'] || d['Valor'] || '';
+
+    if (typeof rawPeso === 'string') rawPeso = rawPeso.replace(/[^0-9.]/g, '');
+    if (typeof rawValor === 'string') rawValor = rawValor.replace(/[^0-9.]/g, '');
+
+    const pesoParsed = parseFloat(rawPeso);
+    const valorParsed = parseFloat(rawValor);
+
+    if(!agregados[year]) {
+      agregados[year] = { pesoSum: 0, valorSum: 0, tienePeso: false, tieneValor: false };
+    }
+
+    if (!isNaN(pesoParsed) && pesoParsed > 0) {
+      agregados[year].pesoSum += pesoParsed;
+      agregados[year].tienePeso = true;
+    }
+    if (!isNaN(valorParsed) && valorParsed > 0) {
+      agregados[year].valorSum += valorParsed;
+      agregados[year].tieneValor = true;
     }
   });
 
-  const labels = Object.keys(agregados).sort((a,b) => parseInt(a) - parseInt(b));
-  const weights = labels.map(y => Math.round(agregados[y].peso / 1000) || 0); 
-  const valores = labels.map(y => Math.round(agregados[y].valor / 1000000) || 0); 
+  const labels = Object.keys(agregados)
+    .filter(y => agregados[y].tienePeso || agregados[y].tieneValor)
+    .sort((a,b) => parseInt(a) - parseInt(b));
+
+  const weights = labels.map(y => agregados[y].tienePeso ? Math.round(agregados[y].pesoSum / 1000) : NaN); 
+  const valores = labels.map(y => agregados[y].tieneValor ? Math.round(agregados[y].valorSum / 1000000) : NaN); 
 
   const ctx = document.getElementById('cap-chart').getContext('2d');
   capChart = new Chart(ctx, {
@@ -504,7 +512,7 @@ function actualizarGraficaConsolidada(comunesValidos) {
       labels: labels,
       datasets: [
         { type: 'bar', label: 'Peso Consolidado (Toneladas)', data: weights, backgroundColor: 'rgba(157,36,73,0.8)', borderColor: '#9D2449', borderWidth: 1, yAxisID: 'y' },
-        { type: 'line', label: 'Valor Consolidado (Millones MXP)', data: valores, borderColor: '#B38E5D', backgroundColor: 'rgba(179,142,93,0.15)', borderWidth: 3, pointRadius: 5, yAxisID: 'y1' }
+        { type: 'line', label: 'Valor Consolidado (Millones MXP)', data: valores, borderColor: '#B38E5D', backgroundColor: 'rgba(179,142,93,0.15)', borderWidth: 3, pointRadius: 5, yAxisID: 'y1', spanGaps: false }
       ]
     },
     options: {
