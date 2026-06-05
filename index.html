@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Catálogo de recursos RNIIPA | IMIPAS</title>
+<title>Tablero de Recursos RNIIPA | IMIPAS</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
@@ -76,58 +76,84 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
   font-family: 'Noto Sans', sans-serif;
 }
 
-/* SUBNAV TABS TIPO GOBIERNO */
-.subnav {
-  background: #ffffff;
-  display: flex;
-  overflow-x: auto;
-  padding: 0 5%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  margin-bottom: 30px;
+/* LAYOUT UNIFICADO (DASHBOARD) */
+.dashboard-container {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 24px;
+  padding: 30px 5%;
+  max-width: 1800px;
+  margin: 0 auto;
 }
-.subnav button {
-  background: none;
-  border: none;
-  color: var(--text);
-  padding: 16px 24px;
-  font-size: 14px;
-  cursor: pointer;
-  font-weight: 600;
-  border-bottom: 4px solid transparent;
-  transition: all .2s;
-  white-space: nowrap;
-}
-.subnav button:hover {
-  color: var(--primary);
-  background: #f8f9fa;
-}
-.subnav button.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
+@media (max-width: 1200px) {
+  .dashboard-container { grid-template-columns: 1fr; }
 }
 
-/* LAYOUT & CARGA */
-.tab-content{display:none; padding:0 5% 40px 5%; max-width:1600px; margin:0 auto;}
+.dashboard-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.tab-content{display:none; padding:30px 5% 40px 5%; max-width:1600px; margin:0 auto;}
 .tab-content.active{display:block}
+
 #loader{text-align:center; padding:80px; font-size:16px; color:var(--text2);}
 .spinner {border: 4px solid rgba(0,0,0,.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: var(--primary); animation: spin 1s linear infinite; margin: 0 auto 15px;}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
 /* MAPA PRINCIPAL */
-#map{height:calc(100vh - 350px);width:100%; border-radius:8px; border:1px solid var(--border); z-index: 1;}
+.map-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  overflow: hidden;
+  position: relative;
+}
+.map-card h3, .chart-wrap h3 {
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--gob-green);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+#map{height: 400px; width:100%; z-index: 1;}
+
+#map-empty-overlay {
+  display: none;
+  position: absolute;
+  top: 50px; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.85);
+  z-index: 10;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Noto Sans';
+  color: var(--primary);
+  font-weight: 600;
+}
 
 /* TABLA EXPANDIBLE */
-.filter-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
-.filter-bar input, .filter-bar select{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-size:14px;flex:1;min-width:250px; font-family:'Noto Sans';}
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.filter-bar{display:flex;gap:12px;margin-bottom:16px;}
+.filter-bar input{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-size:14px;flex:1; font-family:'Noto Sans';}
+.table-wrap {
+  background:#fff;
+  border-radius:8px;
+  overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+  border: 1px solid var(--border);
+}
+table{width:100%;border-collapse:collapse;}
 thead{background:var(--gob-green);color:#fff}
 th{padding:14px 16px;text-align:left;font-size:13px;font-weight:600; text-transform:uppercase; letter-spacing: 0.5px;}
 td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-family:'Noto Sans', sans-serif;}
 
-.main-row{transition: background 0.2s;}
+.main-row{transition: background 0.2s; cursor: pointer;}
 .main-row:hover{background:#f8f0f2;}
 .details-row{display:none; background:#fafafa;}
-.details-content{padding:16px 20px; border-left:4px solid var(--primary); color:var(--text2); font-size:13px; display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px;}
+.details-content{padding:16px 20px; border-left:4px solid var(--primary); color:var(--text2); font-size:13px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;}
 
 /* ENLACE DE TABLA */
 .link-especie{color:var(--primary); text-decoration:none; font-weight:700; cursor:pointer;}
@@ -150,13 +176,12 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 .data-item strong{color:#444; display:block; font-size:12px; text-transform:uppercase; color:var(--text2); font-family:'Montserrat', sans-serif;}
 .data-item span{display:block; color:var(--text); margin-top:2px;}
 
-/* MAPA Y GRAFICA DENTRO DE FICHA */
 #map-ficha{height:400px; width:100%; border-radius:0 0 8px 8px; z-index:1;}
 .chart-ficha-container{position: relative; height: 350px; width: 100%;}
 
 /* CAPTURA GLOBAL */
-.chart-wrap{background:#fff;border-radius:8px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.08); max-width: 1000px; margin:0 auto;}
-select{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-size:14px; min-width:300px; font-family:'Noto Sans';}
+.chart-wrap{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); overflow: hidden;}
+.chart-container-box { padding: 20px; position: relative; min-height: 260px; }
 
 /* FOOTER GOB.MX OFICIAL */
 .gobmx-footer {
@@ -183,65 +208,57 @@ select{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-s
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Micrositio RNIIPA - Catálogo de Recursos <span class="version-badge">v1.8</span></h2>
+  <h2>Micrositio RNIIPA - Tablero Unificado de Control <span class="version-badge">v1.9</span></h2>
 </header>
-
-<nav class="subnav" id="menu" style="display:none;">
-  <button class="active" id="btn-catalogo" onclick="showTab('especies',this)">Catálogo</button>
-  <button onclick="showTab('mapa',this)">Mapa de UPAs</button>
-  <button onclick="showTab('captura',this)">Datos de Captura</button>
-</nav>
 
 <div id="loader">
   <div class="spinner"></div>
   <p>Sincronizando datos de la RNIIPA...</p>
 </div>
 
-<div id="tab-especies" class="tab-content active">
-  <div class="filter-bar">
-    <input type="text" id="search-esp" placeholder="Buscar recurso, especie o zona..." onkeyup="filtrarTabla()">
+<div id="main-dashboard" class="dashboard-container" style="display:none;">
+  
+  <div class="dashboard-panel">
+    <div class="filter-bar">
+      <input type="text" id="search-esp" placeholder="Buscar por recurso, nombre común, especie o zona..." onkeyup="filtrarDashboardGlobal()">
+    </div>
+    
+    <div class="table-wrap">
+      <table id="tabla-recursos">
+        <thead>
+          <tr>
+            <th>Recurso</th>
+            <th>Nombre común</th>
+            <th>Especie Científica</th>
+            <th>Litoral</th>
+          </tr>
+        </thead>
+        <tbody id="esp-tbody"></tbody>
+      </table>
+    </div>
   </div>
-  <div style="overflow-x:auto;">
-    <table id="tabla-recursos">
-      <thead>
-        <tr>
-          <th>Recurso</th>
-          <th>Nombre común</th>
-          <th>Especie Científica</th>
-          <th>Litoral</th>
-        </tr>
-      </thead>
-      <tbody id="esp-tbody"></tbody>
-    </table>
+  
+  <div class="dashboard-panel">
+    
+    <div class="map-card">
+      <h3>Distribución Geográfica de UPAs Filtradas</h3>
+      <div id="map-empty-overlay">Sin registros de coordenadas asociadas</div>
+      <div id="map"></div>
+    </div>
+    
+    <div class="chart-wrap">
+      <h3>Histórico Consolidado de Captura (Filtro Activo)</h3>
+      <div class="chart-container-box" id="global-chart-wrapper">
+        <canvas id="cap-chart" height="180"></canvas>
+      </div>
+    </div>
+    
   </div>
 </div>
 
 <div id="tab-ficha" class="tab-content">
-  <button class="btn-back" onclick="cerrarFicha()">← Regresar al Catálogo</button>
-  <div id="ficha-container">
-    </div>
-</div>
-
-<div id="tab-mapa" class="tab-content">
-  <div class="filter-bar">
-    <select id="map-esp-select" onchange="filtrarMapa()">
-      <option value="">— Mostrar todas las Especies —</option>
-    </select>
-  </div>
-  <div class="map-wrap">
-    <div id="map"></div>
-  </div>
-</div>
-
-<div id="tab-captura" class="tab-content">
-  <div style="text-align:center; margin-bottom:20px;">
-    <select id="cap-select" onchange="updateCaptura()">
-      <option value="">— Seleccionar Especie para ver histórico —</option>
-    </select>
-  </div>
-  <div class="chart-wrap">
-    <canvas id="cap-chart" height="120"></canvas>
-  </div>
+  <button class="btn-back" onclick="cerrarFicha()">← Regresar al Tablero Principal</button>
+  <div id="ficha-container"></div>
 </div>
 
 <footer class="gobmx-footer">
@@ -257,7 +274,7 @@ select{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-s
     <h3>Contacto</h3>
     <p>Mesa de ayuda: dudas e información</p>
     <p>gobmx@funcionpublica.gob.mx</p>
-    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 1.8</p>
+    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 1.9</p>
   </div>
 </footer>
 
@@ -265,10 +282,12 @@ select{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-s
 /**
  * HISTORIAL DE CAMBIOS (RNIIPA)
  * -------------------------------------------------------------------------
- * v1.8 - 2026-06-05:
- * - Optimización en el renderizado de gráficos y mapas al cambiar pestañas de forma fluida.
- * - Corrección preventiva en los selectores dinámicos para evitar duplicidad de carga.
- * v1.7 - Versión base con maquetación oficial gob.mx y tabs funcionales.
+ * v1.9 - 2026-06-05:
+ * - Rediseño total a arquitectura de Dashboard en una sola página sin tabs.
+ * - Buscador maestro unificado: Filtra simultáneamente el catálogo, el mapa y re-calcula las gráficas de captura.
+ * - Control estricto de excepciones: Despliega leyendas "Sin registro" claras si no hay datos coincidentes.
+ * v1.8 - Optimización preventiva en renders.
+ * v1.7 - Versión base con maquetación gob.mx.
  */
 
 const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
@@ -304,29 +323,15 @@ async function sincronizarGoogleSheets() {
     if(resFicha && resFicha.ok) datosFicha = Papa.parse(await resFicha.text(), { header: true, skipEmptyLines: true }).data;
 
     document.getElementById('loader').style.display = 'none';
-    document.getElementById('menu').style.display = 'flex';
+    document.getElementById('main-dashboard').style.display = 'grid';
     
     renderTabla(datosIndice);
     initMap();
-    if(datosCaptura.length > 0) initCaptura();
+    actualizarGraficaConsolidada(datosIndice.map(item => item['Común']));
 
   } catch (error) {
-    document.getElementById('loader').innerHTML = `<p style="color:var(--primary)">Error al conectar con la base de datos.</p>`;
+    document.getElementById('loader').innerHTML = `<p style="color:var(--primary)">Error al conectar con la base de datos de la RNIIPA.</p>`;
     console.error(error);
-  }
-}
-
-function showTab(tabId, btn) {
-  document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-  if(btn) {
-    document.querySelectorAll('.subnav button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  }
-  document.getElementById('tab-' + tabId).style.display = 'block';
-  
-  // Forzar redibujado de Leaflet para evitar áreas grises al cambiar de pestaña
-  if (tabId === 'mapa' && map) {
-    setTimeout(() => map.invalidateSize(), 150);
   }
 }
 
@@ -334,6 +339,11 @@ function renderTabla(datos) {
   const tbody = document.getElementById('esp-tbody');
   tbody.innerHTML = '';
   
+  if(datos.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--primary); font-weight:600; padding:30px;">Sin registros coincidentes en el catálogo</td></tr>`;
+    return;
+  }
+
   datos.forEach((item) => {
     const valorComun = item['Común'] || '';
     const displayNombre = item['Nombre común'] || valorComun || 'Sin nombre';
@@ -373,21 +383,140 @@ function renderTabla(datos) {
   });
 }
 
-function filtrarTabla() {
+function filtrarDashboardGlobal() {
   const input = document.getElementById("search-esp").value.toLowerCase();
-  const rows = document.getElementById("esp-tbody").children;
-  for (let i = 0; i < rows.length; i += 2) {
-    const mainRow = rows[i];
-    const detailsRow = rows[i+1];
-    const textToSearch = (mainRow.innerText + " " + detailsRow.innerText).toLowerCase();
-    if (textToSearch.includes(input)) {
-      mainRow.style.display = "";
-    } else {
-      mainRow.style.display = "none";
-      detailsRow.style.display = "none";
-      mainRow.style.background = '';
-    }
+  
+  // 1. Encontrar los elementos que pasan el filtro de búsqueda
+  const itemsFiltrados = datosIndice.filter(item => {
+    const txtRecurso = (item['Recurso'] || '').toLowerCase();
+    const txtComun = (item['Común'] || '').toLowerCase();
+    const txtNombreComun = (item['Nombre común'] || '').toLowerCase();
+    const txtEspecie = (item['Especie'] || item['Nombre científico'] || '').toLowerCase();
+    const txtZona = (item['Zona'] || '').toLowerCase();
+    const txtLitoral = (item['Litoral'] || '').toLowerCase();
+    
+    return txtRecurso.includes(input) || txtComun.includes(input) || 
+           txtNombreComun.includes(input) || txtEspecie.includes(input) || 
+           txtZona.includes(input) || txtLitoral.includes(input);
+  });
+
+  // 2. Renderizar la tabla con el subconjunto
+  renderTabla(itemsFiltrados);
+
+  // 3. Obtener lista de llaves de relación "Común" válidas
+  const comunesActivos = itemsFiltrados.map(item => item['Común']).filter(c => c);
+
+  // 4. Actualizar Mapa Dinámicamente
+  renderMarcadoresGlobales(comunesActivos);
+
+  // 5. Re-calcular estadísticas consolidadas de captura en tiempo real
+  actualizarGraficaConsolidada(comunesActivos);
+}
+
+function initMap() {
+  map = L.map('map').setView([23.6345, -102.5528], 5);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
+  markerCluster = L.markerClusterGroup();
+  map.addLayer(markerCluster);
+  
+  renderMarcadoresGlobales(datosIndice.map(item => item['Común']));
+}
+
+function renderMarcadoresGlobales(comunesValidos) {
+  markerCluster.clearLayers();
+  let puntosVisibles = false;
+  
+  if (comunesValidos.length > 0) {
+    datosCoordenadas.forEach(upa => {
+      const comunUPA = upa['Común'] || '';
+      if (!comunesValidos.includes(comunUPA)) return;
+
+      const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
+      const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
+      
+      if(!isNaN(lat) && !isNaN(lng)) {
+        puntosVisibles = true;
+        const marker = L.marker([lat, lng]);
+        marker.bindPopup(`
+          <div style="font-family:'Noto Sans'; font-size:13px;">
+            <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}</h4>
+            <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || comunUPA}</p>
+            <p style="margin-bottom:4px;"><b>Superficie (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
+            <p style="margin-bottom:0;"><b>Tipo de instalación:</b> ${upa['Tipo de instalación'] || 'N/A'}</p>
+          </div>
+        `);
+        markerCluster.addLayer(marker);
+      }
+    });
   }
+
+  const overlay = document.getElementById('map-empty-overlay');
+  if (puntosVisibles) {
+    overlay.style.display = 'none';
+    map.fitBounds(markerCluster.getBounds().pad(0.1));
+  } else {
+    overlay.style.display = 'flex';
+    overlay.innerText = "Sin registros de coordenadas asociadas";
+  }
+}
+
+function actualizarGraficaConsolidada(comunesValidos) {
+  const container = document.getElementById('global-chart-wrapper');
+  
+  if (comunesValidos.length === 0) {
+    if (capChart) capChart.destroy();
+    container.innerHTML = `<p style="color:var(--primary); text-align:center; padding-top:60px; font-family:'Noto Sans'; font-weight:600;">Sin registros estadísticos de captura</p>`;
+    return;
+  }
+
+  const datosFiltrados = datosCaptura.filter(item => comunesValidos.includes(item['Común']));
+  
+  if (datosFiltrados.length === 0) {
+    if (capChart) capChart.destroy();
+    container.innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:60px; font-family:'Noto Sans';">Sin registros estadísticos de captura para la selección</p>`;
+    return;
+  }
+
+  // Restaurar canvas si fue removido por el estado vacío
+  container.innerHTML = `<canvas id="cap-chart" height="180"></canvas>`;
+
+  const agregados = {};
+  datosFiltrados.forEach(d => {
+    const year = d['AÑO'] || d['Año'] || d['anio'];
+    const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
+    const valor = parseFloat(d['VALOR (PESOS)'] || d['valor_pesos'] || d['Valor']) || 0;
+    
+    if(year) {
+      if(!agregados[year]) agregados[year] = { peso: 0, valor: 0 };
+      agregados[year].peso += peso;
+      agregados[year].valor += valor;
+    }
+  });
+
+  const labels = Object.keys(agregados).sort((a,b) => parseInt(a) - parseInt(b));
+  const weights = labels.map(y => Math.round(agregados[y].peso / 1000) || 0); 
+  const valores = labels.map(y => Math.round(agregados[y].valor / 1000000) || 0); 
+
+  const ctx = document.getElementById('cap-chart').getContext('2d');
+  capChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { type: 'bar', label: 'Peso Consolidado (Toneladas)', data: weights, backgroundColor: 'rgba(157,36,73,0.8)', borderColor: '#9D2449', borderWidth: 1, yAxisID: 'y' },
+        { type: 'line', label: 'Valor Consolidado (Millones MXP)', data: valores, borderColor: '#B38E5D', backgroundColor: 'rgba(179,142,93,0.15)', borderWidth: 3, pointRadius: 5, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        y: { position: 'left', title: { display: true, text: 'Toneladas' } },
+        y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Millones MXP' } }
+      }
+    }
+  });
 }
 
 function renderDato(label, key, item) {
@@ -418,13 +547,11 @@ function abrirFicha(valorComun) {
       ${imgHTML}
       <div class="ficha-title-box">
         <h1>${tituloPrincipal}</h1>
-        
         <div style="margin-bottom: 24px; border-bottom: 2px solid var(--gob-green); padding-bottom: 12px;">
           <strong style="color:var(--primary); font-size:13px; text-transform:uppercase;">Nombre Común</strong>
           <span style="font-size:20px; display:block; color:var(--text); font-weight:600; margin-top:4px;">${nombreComun}</span>
           <em style="color:var(--text2); font-size:16px; display:block; margin-top:4px;">${nombreCientifico}</em>
         </div>
-        
         <div style="display:flex; gap:24px; flex-wrap:wrap; background:#fff; padding:20px; border-radius:8px; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.05);">
           ${renderDato('Estatus del cultivo', 'Estatus del cultivo', item)}
           ${renderDato('Nivel de dominio biotecnológico', 'Nivel de dominio de la biotecnología', item)}
@@ -435,7 +562,6 @@ function abrirFicha(valorComun) {
     </div>
 
     <div class="ficha-grid">
-      
       <div class="ficha-card" style="grid-column: 1 / -1; padding:0; overflow:hidden;">
         <h4 style="padding: 24px 24px 0 24px; border-bottom: none;">Distribución de UPAs para ${tituloPrincipal}</h4>
         <div id="map-ficha"></div>
@@ -458,7 +584,7 @@ function abrirFicha(valorComun) {
         ${renderDato('Características de la zona', 'Características de la zona de cultivo', item)}
         ${renderDato('Densidad de siembra', 'Densidad de siembra', item)}
         ${renderDato('Flujo de agua', 'Promedio de flujo de agua para el cultivo', item)}
-        ${renderDato('Tamaño para siembra', 'Tamaño del organism para siembra', item)}
+        ${renderDato('Tamaño para siembra', 'Tamaño del organismo para siembra', item)}
         ${renderDato('Origen / Procedencia semilla', 'Origen semilla', item)}
         ${renderDato('Procedencia', 'Procedencia', item)}
         ${renderDato('Alimento', 'ALIMENTO', item)}
@@ -504,16 +630,15 @@ function abrirFicha(valorComun) {
       </div>
 
       <div class="ficha-card" style="grid-column: 1 / -1;">
-        <h4>Datos Estadísticos de Captura</h4>
+        <h4>Datos Estadísticos de Captura Histórica</h4>
         <div id="chart-ficha-wrapper" class="chart-ficha-container">
            <canvas id="ficha-cap-chart"></canvas>
         </div>
       </div>
-
     </div>
   `;
 
-  document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+  document.getElementById('main-dashboard').style.display = 'none';
   document.getElementById('tab-ficha').style.display = 'block';
   window.scrollTo(0, 0);
 
@@ -526,21 +651,13 @@ function abrirFicha(valorComun) {
     let hayPuntos = false;
 
     datosCoordenadas.forEach(upa => {
-      const comunUPA = upa['Común'] || '';
-      if (comunUPA === valorComun) {
+      if ((upa['Común'] || '') === valorComun) {
         const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
         const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
         if(!isNaN(lat) && !isNaN(lng)) {
           hayPuntos = true;
           const marker = L.marker([lat, lng]);
-          marker.bindPopup(`
-            <div style="font-family:'Noto Sans'; font-size:13px;">
-              <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}</h4>
-              <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || comunUPA}</p>
-              <p style="margin-bottom:4px;"><b>Superficie (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
-              <p style="margin-bottom:0;"><b>Tipo de instalación:</b> ${upa['Tipo de instalación'] || 'N/A'}</p>
-            </div>
-          `);
+          marker.bindPopup(`<div style="font-family:'Noto Sans'; font-size:13px;"><b>${upa['nombre_upa'] || 'Unidad'}</b></div>`);
           clusterFicha.addLayer(marker);
         }
       }
@@ -552,7 +669,6 @@ function abrirFicha(valorComun) {
 
   setTimeout(() => {
     if (chartFichaInstance) chartFichaInstance.destroy();
-
     const datosFiltradosCap = datosCaptura.filter(item => item['Común'] === valorComun);
     if (datosFiltradosCap.length > 0) {
         const agregadosPorAno = {};
@@ -574,157 +690,25 @@ function abrirFicha(valorComun) {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Captura Total Anual (Kg)',
+                    label: 'Captura Anual (Kg)',
                     data: dataKg,
                     backgroundColor: 'rgba(157,36,73,0.15)',
                     borderColor: '#9D2449',
                     borderWidth: 2,
-                    pointBackgroundColor: '#B38E5D',
-                    pointRadius: 4,
                     fill: true
                 }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Kilogramos Totales' } },
-                    x: { title: { display: true, text: 'Año' } }
-                }
             }
         });
     } else {
-        document.getElementById('chart-ficha-wrapper').innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:40px; font-family:'Noto Sans';">No hay historial estadístico de captura disponible para esta especie.</p>`;
+        document.getElementById('chart-ficha-wrapper').innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:40px;">Sin historial estadístico disponible para esta especie.</p>`;
     }
   }, 100);
 }
 
 function cerrarFicha() {
   document.getElementById('tab-ficha').style.display = 'none';
-  document.getElementById('tab-especies').style.display = 'block';
-}
-
-// --- MAPA PRINCIPAL ---
-function initMap() {
-  map = L.map('map').setView([23.6345, -102.5528], 5);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
-  markerCluster = L.markerClusterGroup();
-  map.addLayer(markerCluster);
-
-  const selectMap = document.getElementById('map-esp-select');
-  const seenComun = new Set();
-  const options = [];
-
-  datosCoordenadas.forEach(item => {
-    const comun = item['Común'];
-    if(comun && !seenComun.has(comun)) {
-      seenComun.add(comun);
-      const display = item['Nombre común'] || item['Común']; 
-      options.push({ value: comun, text: display });
-    }
-  });
-
-  options.sort((a,b) => a.text.localeCompare(b.text)).forEach(opt => {
-    selectMap.appendChild(new Option(opt.text, opt.value));
-  });
-
-  renderMarcadores("");
-}
-
-function filtrarMapa() {
-  renderMarcadores(document.getElementById('map-esp-select').value);
-}
-
-function renderMarcadores(filtroComun) {
-  markerCluster.clearLayers();
-  datosCoordenadas.forEach(upa => {
-    const comunUPA = upa['Común'] || '';
-    if (filtroComun && comunUPA !== filtroComun) return;
-
-    const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
-    const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
-    
-    if(!isNaN(lat) && !isNaN(lng)) {
-      const marker = L.marker([lat, lng]);
-      marker.bindPopup(`
-        <div style="font-family:'Noto Sans'; font-size:13px;">
-          <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Production'}</h4>
-          <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || comunUPA}</p>
-          <p style="margin-bottom:4px;"><b>Superficie de producción (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
-          <p style="margin-bottom:4px;"><b>Número de cuerpos de agua:</b> ${upa['Número de cuerpos de agua'] || 'N/A'}</p>
-          <p style="margin-bottom:4px;"><b>Función zootécnica:</b> ${upa['Función zootécnica'] || 'N/A'}</p>
-          <p style="margin-bottom:0;"><b>Tipo de instalación:</b> ${upa['Tipo de instalación'] || 'N/A'}</p>
-        </div>
-      `);
-      markerCluster.addLayer(marker);
-    }
-  });
-}
-
-// --- GRÁFICAS DE CAPTURA GLOBAL ---
-function initCaptura() {
-  const select = document.getElementById('cap-select');
-  const seenComun = new Set();
-  const options = [];
-
-  datosCaptura.forEach(item => {
-    const comun = item['Común'];
-    if(comun && !seenComun.has(comun)) {
-      seenComun.add(comun);
-      const display = item['Nombre común'] || item['Común'];
-      options.push({ value: comun, text: display });
-    }
-  });
-
-  options.sort((a,b) => a.text.localeCompare(b.text)).forEach(opt => {
-    select.appendChild(new Option(opt.text, opt.value));
-  });
-}
-
-function updateCaptura() {
-  const comunSel = document.getElementById('cap-select').value;
-  if (!comunSel) return;
-
-  const datosFiltrados = datosCaptura.filter(item => item['Común'] === comunSel);
-  const agregados = {};
-  
-  datosFiltrados.forEach(d => {
-      const year = d['AÑO'] || d['Año'] || d['anio'];
-      const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
-      const valor = parseFloat(d['VALOR (PESOS)'] || d['valor_pesos'] || d['Valor']) || 0;
-      
-      if(year) {
-          if(!agregados[year]) agregados[year] = { peso: 0, valor: 0 };
-          agregados[year].peso += peso;
-          agregados[year].valor += valor;
-      }
-  });
-
-  const labels = Object.keys(agregados).sort((a,b) => parseInt(a) - parseInt(b));
-  const weights = labels.map(y => Math.round(agregados[y].peso / 1000) || 0); 
-  const valores = labels.map(y => Math.round(agregados[y].valor / 1000000) || 0); 
-
-  if (capChart) capChart.destroy();
-  const ctx = document.getElementById('cap-chart').getContext('2d');
-  
-  capChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        { type: 'bar', label: 'Peso Total (Toneladas)', data: weights, backgroundColor: 'rgba(157,36,73,0.8)', borderColor: '#9D2449', borderWidth: 1, yAxisID: 'y' },
-        { type: 'line', label: 'Valor Total (Millones MXP)', data: valores, borderColor: '#B38E5D', backgroundColor: 'rgba(179,142,93,0.15)', borderWidth: 3, pointRadius: 5, yAxisID: 'y1' }
-      ]
-    },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      scales: {
-        y: { position: 'left', title: { display: true, text: 'Toneladas' } },
-        y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Millones MXP' } }
-      }
-    }
-  });
+  document.getElementById('main-dashboard').style.display = 'grid';
+  setTimeout(() => { if(map) map.invalidateSize(); }, 50);
 }
 
 window.onload = sincronizarGoogleSheets;
