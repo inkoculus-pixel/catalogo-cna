@@ -1,1450 +1,759 @@
-
 <!DOCTYPE html>
-
 <html lang="es">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Tablero de Recursos RNIIPA | IMIPAS</title>
 
-
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
-
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
-
-
 <style>
-
 *{box-sizing:border-box;margin:0;padding:0}
-
 :root{
-
   /* PALETA OFICIAL GOB.MX */
-
   --gob-green: #13322B;
-
   --primary: #9D2449; /* Guinda */
-
   --primary-dark: #7A1C39;
-
   --secondary: #B38E5D; /* Dorado */
-
   --bg:#f4f6f9; 
-
   --border:#dee2e6;
-
   --text:#212529;
-
   --text2:#6c757d;
-
 }
-
 body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh;}
 
-
-
 /* HEADER GOB.MX OFICIAL */
-
 .gobmx-topbar {
-
   background-color: var(--gob-green);
-
   height: 48px;
-
   display: flex;
-
   align-items: center;
-
   padding: 0 5%;
-
 }
-
 .gobmx-topbar img {
-
   height: 28px;
-
 }
-
-
 
 /* HEADER IMIPAS */
-
 .imipas-header {
-
   background-color: #ffffff;
-
   padding: 24px 5%;
-
   border-bottom: 4px solid var(--primary);
-
   display: flex;
-
   flex-direction: column;
-
   gap: 6px;
-
 }
-
 .imipas-header h1 {
-
   font-size: 24px;
-
   color: var(--gob-green);
-
   font-weight: 700;
-
   line-height: 1.2;
-
 }
-
 .imipas-header h2 {
-
   font-size: 16px;
-
   color: var(--text2);
-
   font-weight: 500;
-
   display: flex;
-
   align-items: center;
-
   gap: 12px;
-
 }
-
 .version-badge {
-
   font-size: 11px;
-
   background: var(--gob-green);
-
   color: white;
-
   padding: 3px 8px;
-
   border-radius: 12px;
-
   font-weight: 600;
-
   font-family: 'Noto Sans', sans-serif;
-
 }
-
-
 
 /* LAYOUT UNIFICADO (DASHBOARD) */
-
 .dashboard-container {
-
   display: grid;
-
   grid-template-columns: 1.1fr 0.9fr;
-
   gap: 24px;
-
   padding: 30px 5%;
-
   max-width: 1800px;
-
   margin: 0 auto;
-
 }
-
 @media (max-width: 1200px) {
-
   .dashboard-container { grid-template-columns: 1fr; }
-
 }
-
-
 
 .dashboard-panel {
-
   display: flex;
-
   flex-direction: column;
-
   gap: 24px;
-
 }
-
-
 
 .tab-content{display:none; padding:30px 5% 40px 5%; max-width:1600px; margin:0 auto;}
-
 .tab-content.active{display:block}
 
-
-
 #loader{text-align:center; padding:80px; font-size:16px; color:var(--text2);}
-
 .spinner {border: 4px solid rgba(0,0,0,.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: var(--primary); animation: spin 1s linear infinite; margin: 0 auto 15px;}
-
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-
-
 /* MAPA PRINCIPAL */
-
 .map-card {
-
   background: #fff;
-
   border-radius: 8px;
-
   border: 1px solid var(--border);
-
   box-shadow: 0 1px 4px rgba(0,0,0,.08);
-
   overflow: hidden;
-
   position: relative;
-
 }
-
 .map-card h3, .chart-wrap h3 {
-
   padding: 16px 20px;
-
   background: #f8f9fa;
-
   border-bottom: 1px solid var(--border);
-
   font-size: 14px;
-
   color: var(--gob-green);
-
   text-transform: uppercase;
-
   letter-spacing: 0.5px;
-
 }
-
 #map{height: 400px; width:100%; z-index: 1;}
 
-
-
 #map-empty-overlay {
-
   display: none;
-
   position: absolute;
-
   top: 50px; left: 0; right: 0; bottom: 0;
-
   background: rgba(255,255,255,0.85);
-
   z-index: 10;
-
   justify-content: center;
-
   align-items: center;
-
   font-family: 'Noto Sans';
-
   color: var(--primary);
-
   font-weight: 600;
-
 }
-
-
 
 /* TABLA EXPANDIBLE */
-
 .filter-bar{display:flex;gap:12px;margin-bottom:16px;}
-
 .filter-bar input{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-size:14px;flex:1; font-family:'Noto Sans';}
-
 .table-wrap {
-
   background:#fff;
-
   border-radius:8px;
-
   overflow:hidden;
-
   box-shadow:0 1px 4px rgba(0,0,0,.08);
-
   border: 1px solid var(--border);
-
 }
-
 table{width:100%;border-collapse:collapse;}
-
 thead{background:var(--gob-green);color:#fff}
-
 th{padding:14px 16px;text-align:left;font-size:13px;font-weight:600; text-transform:uppercase; letter-spacing: 0.5px;}
-
 td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-family:'Noto Sans', sans-serif;}
 
-
-
 .main-row{transition: background 0.2s; cursor: pointer;}
-
 .main-row:hover{background:#f8f0f2;}
-
 .details-row{display:none; background:#fafafa;}
-
 .details-content{padding:16px 20px; border-left:4px solid var(--primary); color:var(--text2); font-size:13px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;}
 
-
-
 /* ENLACE DE TABLA */
-
 .link-especie{color:var(--primary); text-decoration:none; font-weight:700; cursor:pointer;}
-
 .link-especie:hover{text-decoration:underline; color:var(--secondary);}
-
-
+.text-static{color:var(--text); font-weight:500;}
 
 /* FICHA TÉCNICA */
-
 .btn-back{background:#fff; border:1px solid var(--border); padding:10px 20px; border-radius:6px; cursor:pointer; font-family:'Montserrat'; font-weight:600; color:var(--gob-green); margin-bottom:24px; display:inline-flex; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05);}
-
 .btn-back:hover{background:#f0f0f0;}
 
-
-
 .ficha-header{display:flex; flex-wrap:wrap; gap:30px; margin-bottom:30px; align-items:flex-start;}
-
 .ficha-img-box{flex:0 0 350px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#fff; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.08);}
-
 .ficha-img-box img{width:100%; height:auto; object-fit:cover; display:block;}
-
 .ficha-title-box{flex:1; min-width:300px;}
-
 .ficha-title-box h1{font-size:36px; color:var(--gob-green); margin-bottom:8px; text-transform:uppercase; letter-spacing:-0.5px; font-weight:700;}
 
-
-
 .ficha-grid{display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:24px;}
-
 .ficha-card{background:#fff; border:1px solid var(--border); border-radius:8px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.05);}
-
 .ficha-card h4{color:var(--primary); border-bottom:2px solid #f0f0f0; padding-bottom:10px; margin-bottom:16px; font-size:16px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;}
-
 .data-item{margin-bottom:12px; font-size:14px; line-height:1.6; text-align:justify; font-family:'Noto Sans', sans-serif;}
-
 .data-item strong{color:#444; display:block; font-size:12px; text-transform:uppercase; color:var(--text2); font-family:'Montserrat', sans-serif;}
-
 .data-item span{display:block; color:var(--text); margin-top:2px;}
 
-
-
 #map-ficha{height:400px; width:100%; border-radius:0 0 8px 8px; z-index:1;}
-
 .chart-ficha-container{position: relative; height: 350px; width: 100%;}
 
-
-
 /* CAPTURA GLOBAL */
-
 .chart-wrap{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); overflow: hidden;}
-
 .chart-container-box { padding: 20px; position: relative; min-height: 260px; }
 
-
-
 /* FOOTER GOB.MX OFICIAL */
-
 .gobmx-footer {
-
   background-color: var(--gob-green);
-
   color: #fff;
-
   padding: 40px 5% 60px 5%;
-
   display: grid;
-
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-
   gap: 40px;
-
   background-image: url('https://framework-gb.cdn.gob.mx/landing/img/pleca.svg');
-
   background-repeat: repeat-x;
-
   background-position: bottom;
-
   margin-top: 60px;
-
 }
-
 .gobmx-footer h3 { font-size: 16px; margin-bottom: 20px; font-weight: 700; color: #fff; }
-
 .gobmx-footer p { font-size: 14px; color: #d1d5d8; text-decoration: none; line-height: 1.6; display:block; margin-bottom:10px; font-family:'Noto Sans', sans-serif;}
-
 </style>
-
 </head>
-
 <body>
 
-
-
 <div class="gobmx-topbar">
-
   <img src="https://framework-gb.cdn.gob.mx/landing/img/logoheader.svg" alt="Gobierno de México">
-
 </div>
-
-
 
 <header class="imipas-header">
-
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-
-  <h2>Micrositio RNIIPA - Tablero Unificado de Control <span class="version-badge">v2.3</span></h2>
-
+  <h2>Micrositio RNIIPA - Tablero Unificado de Control <span class="version-badge">v2.4</span></h2>
 </header>
 
-
-
 <div id="loader">
-
   <div class="spinner"></div>
-
   <p>Sincronizando datos de la RNIIPA...</p>
-
 </div>
-
-
 
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
-
   
-
   <div class="dashboard-panel">
-
     <div class="filter-bar">
-
       <input type="text" id="search-esp" placeholder="Buscar por recurso, nombre común, especie o zona..." onkeyup="filtrarDashboardGlobal()">
-
     </div>
-
     
-
     <div class="table-wrap">
-
       <table id="tabla-recursos">
-
         <thead>
-
           <tr>
-
             <th>Recurso</th>
-
             <th>Nombre común</th>
-
             <th>Especie Científica</th>
-
             <th>Litoral</th>
-
           </tr>
-
         </thead>
-
         <tbody id="esp-tbody"></tbody>
-
       </table>
-
     </div>
-
   </div>
-
   
-
   <div class="dashboard-panel">
-
     
-
     <div class="map-card">
-
       <h3>Distribución Geográfica de UPAs Filtradas</h3>
-
       <div id="map-empty-overlay">Sin registros de coordenadas asociadas</div>
-
       <div id="map"></div>
-
     </div>
-
     
-
     <div class="chart-wrap">
-
-      <h3>Histórico Consolidado de Captura (Filtro Activo)</h3>
-
+      <h3>Histórico de Captura por Entidad (Filtro Activo)</h3>
       <div class="chart-container-box" id="global-chart-wrapper">
-
         <canvas id="cap-chart" height="180"></canvas>
-
       </div>
-
     </div>
-
     
-
   </div>
-
 </div>
-
-
 
 <div id="tab-ficha" class="tab-content">
-
   <button class="btn-back" onclick="cerrarFicha()">← Regresar al Tablero Principal</button>
-
   <div id="ficha-container"></div>
-
 </div>
 
-
-
 <footer class="gobmx-footer">
-
   <div>
-
     <p><b>IMIPAS</b></p>
-
     <p>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</p>
-
   </div>
-
   <div>
-
     <h3>¿Qué es gob.mx?</h3>
-
     <p>Es el portal único de trámites, información y participación ciudadana.</p>
-
   </div>
-
   <div>
-
     <h3>Contacto</h3>
-
     <p>Mesa de ayuda: dudas e información</p>
-
     <p>gobmx@funcionpublica.gob.mx</p>
-
-    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 2.3</p>
-
+    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 2.4</p>
   </div>
-
 </footer>
 
-
-
 <script>
-
 /**
-
  * HISTORIAL DE CAMBIOS (RNIIPA)
-
  * -------------------------------------------------------------------------
-
- * v2.3 - 2026-06-05:
-
- * - Entrega consolidada del código fuente completo bajo requerimiento del operador.
-
- * - Sincronización robusta de componentes dinámicos en una arquitectura SPA de vista única.
-
+ * v2.4 - 2026-06-05:
+ * - Eliminación definitiva del valor comercial en pesos de las gráficas globales.
+ * - Re-arquitectura de la gráfica principal a barras apiladas segmentadas por "ENTIDAD".
+ * - Filtro restrictivo en hipervínculos de tabla: solo son cliqueables si poseen campo "Común".
+ * v2.3 - Sincronización robusta de componentes dinámicos en una arquitectura SPA de vista única.
  * v2.2 - Ajuste dinámico de ejes en Chart.js para omitir años sin registros numéricos de captura.
-
  * v2.1 - Sanitización de strings en columnas financieras de Google Sheets.
-
  */
-
-
 
 const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
 
-
-
 let datosIndice = [];
-
 let datosCoordenadas = [];
-
 let datosCaptura = [];
-
 let datosFicha = []; 
-
 let map;
-
 let markerCluster;
-
 let capChart;
-
 let mapFichaInstance = null; 
-
 let chartFichaInstance = null;
 
-
-
 async function sincronizarGoogleSheets() {
-
   try {
-
     const urlIndice = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=indice`;
-
     const urlCoordenadas = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=coordenadas`;
-
     const urlCaptura = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=captura`;
-
     const urlFicha = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Datos%20de%20ficha`; 
 
-
-
     const [resIndice, resCoord, resCaptura, resFicha] = await Promise.all([
-
       fetch(urlIndice), 
-
       fetch(urlCoordenadas), 
-
       fetch(urlCaptura).catch(() => null),
-
       fetch(urlFicha).catch(() => null)
-
     ]);
 
-
-
     datosIndice = Papa.parse(await resIndice.text(), { header: true, skipEmptyLines: true }).data;
-
     datosCoordenadas = Papa.parse(await resCoord.text(), { header: true, skipEmptyLines: true }).data;
-
     
-
     if(resCaptura && resCaptura.ok) datosCaptura = Papa.parse(await resCaptura.text(), { header: true, skipEmptyLines: true }).data;
-
     if(resFicha && resFicha.ok) datosFicha = Papa.parse(await resFicha.text(), { header: true, skipEmptyLines: true }).data;
 
-
-
     document.getElementById('loader').style.display = 'none';
-
     document.getElementById('main-dashboard').style.display = 'grid';
-
     
-
     renderTabla(datosIndice);
-
     initMap();
-
     actualizarGraficaConsolidada(datosIndice.map(item => item['Común']));
 
-
-
   } catch (error) {
-
     document.getElementById('loader').innerHTML = `<p style="color:var(--primary)">Error al conectar con la base de datos de la RNIIPA.</p>`;
-
     console.error(error);
-
   }
-
 }
-
-
 
 function renderTabla(datos) {
-
   const tbody = document.getElementById('esp-tbody');
-
   tbody.innerHTML = '';
-
   
-
   if(datos.length === 0) {
-
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--primary); font-weight:600; padding:30px;">Sin registros coincidentes en el catálogo</td></tr>`;
-
     return;
-
   }
-
-
 
   datos.forEach((item) => {
-
-    const valorComun = item['Común'] || '';
-
+    const valorComun = (item['Común'] || '').toString().trim();
     const displayNombre = item['Nombre común'] || valorComun || 'Sin nombre';
-
     
-
     const tr = document.createElement('tr');
-
     tr.className = 'main-row';
-
     
-
     tr.onclick = (e) => {
-
       if(e.target.tagName.toLowerCase() === 'a') return; 
-
       const isHidden = trDetails.style.display === 'none' || trDetails.style.display === '';
-
       trDetails.style.display = isHidden ? 'table-row' : 'none';
-
       tr.style.background = isHidden ? '#f8f0f2' : '';
-
     };
 
-
+    let nombreCeldaHTML = '';
+    if (valorComun !== "") {
+      nombreCeldaHTML = `<a class="link-especie" data-comun="${valorComun}" onclick="abrirFicha(this.getAttribute('data-comun'))">${displayNombre}</a>`;
+    } else {
+      nombreCeldaHTML = `<span class="text-static">${displayNombre}</span>`;
+    }
 
     tr.innerHTML = `
-
       <td>${item['Recurso'] || ''}</td>
-
-      <td><a class="link-especie" data-comun="${valorComun}" onclick="abrirFicha(this.getAttribute('data-comun'))">${displayNombre}</a></td>
-
+      <td>${nombreCeldaHTML}</td>
       <td><em>${item['Especie'] || item['Nombre científico'] || ''}</em></td>
-
       <td>${item['Litoral'] || ''}</td>
-
     `;
-
     
-
     const trDetails = document.createElement('tr');
-
     trDetails.className = 'details-row';
-
     trDetails.innerHTML = `
-
       <td colspan="4" style="padding: 0;">
-
         <div class="details-content">
-
           <div><p><strong>Zona:</strong></p><p>${item['Zona'] || 'N/A'}</p></div>
-
           <div><p><strong>Año:</strong></p><p>${item['Año'] || item['anio'] || 'N/A'}</p></div>
-
           <div><p><strong>Estatus vigente:</strong></p><p>${item['Estatus vigente'] || item['Estatus'] || 'N/A'}</p></div>
-
           <div><p><strong>Carta Nacional:</strong></p><p>${item['Carta Nacional'] || 'N/A'}</p></div>
-
         </div>
-
       </td>
-
     `;
-
-
 
     tbody.appendChild(tr);
-
     tbody.appendChild(trDetails);
-
   });
-
 }
-
-
 
 function filtrarDashboardGlobal() {
-
   const input = document.getElementById("search-esp").value.toLowerCase();
-
   
-
   const itemsFiltrados = datosIndice.filter(item => {
-
     const txtRecurso = (item['Recurso'] || '').toLowerCase();
-
     const txtComun = (item['Común'] || '').toLowerCase();
-
     const txtNombreComun = (item['Nombre común'] || '').toLowerCase();
-
     const txtEspecie = (item['Especie'] || item['Nombre científico'] || '').toLowerCase();
-
     const txtZona = (item['Zona'] || '').toLowerCase();
-
     const txtLitoral = (item['Litoral'] || '').toLowerCase();
-
     
-
     return txtRecurso.includes(input) || txtComun.includes(input) || 
-
            txtNombreComun.includes(input) || txtEspecie.includes(input) || 
-
            txtZona.includes(input) || txtLitoral.includes(input);
-
   });
 
-
-
   renderTabla(itemsFiltrados);
-
   const comunesActivos = itemsFiltrados.map(item => item['Común']).filter(c => c);
-
   renderMarcadoresGlobales(comunesActivos);
-
   actualizarGraficaConsolidada(comunesActivos);
-
 }
-
-
 
 function initMap() {
-
   map = L.map('map').setView([23.6345, -102.5528], 5);
-
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(map);
-
   markerCluster = L.markerClusterGroup();
-
   map.addLayer(markerCluster);
-
   
-
   renderMarcadoresGlobales(datosIndice.map(item => item['Común']));
-
 }
-
-
 
 function renderMarcadoresGlobales(comunesValidos) {
-
   markerCluster.clearLayers();
-
   let puntosVisibles = false;
-
   
-
   if (comunesValidos.length > 0) {
-
     datosCoordenadas.forEach(upa => {
-
       const comunUPA = upa['Común'] || '';
-
       if (!comunesValidos.includes(comunUPA)) return;
 
-
-
       const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
-
       const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
-
       
-
       if(!isNaN(lat) && !isNaN(lng)) {
-
         puntosVisibles = true;
-
         const marker = L.marker([lat, lng]);
-
         marker.bindPopup(`
-
           <div style="font-family:'Noto Sans'; font-size:13px;">
-
-            <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}</h4>
-
+            <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Production'}</h4>
             <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || comunUPA}</p>
-
             <p style="margin-bottom:4px;"><b>Superficie (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
-
             <p style="margin-bottom:0;"><b>Tipo de instalación:</b> ${upa['Tipo de instalación'] || 'N/A'}</p>
-
           </div>
-
         `);
-
         markerCluster.addLayer(marker);
-
       }
-
     });
-
   }
-
-
 
   const overlay = document.getElementById('map-empty-overlay');
-
   if (puntosVisibles) {
-
     overlay.style.display = 'none';
-
     map.fitBounds(markerCluster.getBounds().pad(0.1));
-
   } else {
-
     overlay.style.display = 'flex';
-
     overlay.innerText = "Sin registros de coordenadas asociadas";
-
   }
-
 }
 
-
+function generarColorPorPaleta(index, total) {
+  const hues = [345, 42, 165, 200, 280, 20, 120, 310];
+  const hue = hues[index % hues.length];
+  const saturation = 60 + (index % 3) * 10;
+  const lightness = 40 + (index % 2) * 10;
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
 
 function actualizarGraficaConsolidada(comunesValidos) {
-
   const container = document.getElementById('global-chart-wrapper');
-
   
-
   if (comunesValidos.length === 0) {
-
     if (capChart) capChart.destroy();
-
     container.innerHTML = `<p style="color:var(--primary); text-align:center; padding-top:60px; font-family:'Noto Sans'; font-weight:600;">Sin registros estadísticos de captura</p>`;
-
     return;
-
   }
-
-
 
   const datosFiltrados = datosCaptura.filter(item => comunesValidos.includes(item['Común']));
-
   
-
   if (datosFiltrados.length === 0) {
-
     if (capChart) capChart.destroy();
-
     container.innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:60px; font-family:'Noto Sans';">Sin registros estadísticos de captura para la selección</p>`;
-
     return;
-
   }
-
-
 
   container.innerHTML = `<canvas id="cap-chart" height="180"></canvas>`;
 
-
-
-  const agregados = {};
+  const añosSet = new Set();
+  const entidadesSet = new Set();
+  const matrizDatos = {};
 
   datosFiltrados.forEach(d => {
-
     const year = (d['AÑO'] || d['Año'] || d['anio'] || '').toString().trim();
-
+    let entidad = (d['ENTIDAD'] || d['entidad'] || d['Entidad'] || 'No Especificado').toString().trim();
     if (!year) return;
 
-
+    añosSet.add(year);
+    entidadesSet.add(entidad);
 
     let rawPeso = d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso'] || '';
-
-    let rawValor = d['VALOR (PESOS)'] || d['valor_pesos'] || d['Valor'] || '';
-
-
-
     if (typeof rawPeso === 'string') rawPeso = rawPeso.replace(/[^0-9.]/g, '');
-
-    if (typeof rawValor === 'string') rawValor = rawValor.replace(/[^0-9.]/g, '');
-
-
-
     const pesoParsed = parseFloat(rawPeso);
 
-    const valorParsed = parseFloat(rawValor);
-
-
-
-    if(!agregados[year]) {
-
-      agregados[year] = { pesoSum: 0, valorSum: 0, tienePeso: false, tieneValor: false };
-
-    }
-
-
-
     if (!isNaN(pesoParsed) && pesoParsed > 0) {
-
-      agregados[year].pesoSum += pesoParsed;
-
-      agregados[year].tienePeso = true;
-
+      if (!matrizDatos[year]) matrizDatos[year] = {};
+      if (!matrizDatos[year][entidad]) matrizDatos[year][entidad] = 0;
+      matrizDatos[year][entidad] += pesoParsed;
     }
-
-    if (!isNaN(valorParsed) && valorParsed > 0) {
-
-      agregados[year].valorSum += valorParsed;
-
-      agregados[year].tieneValor = true;
-
-    }
-
   });
 
+  const labelsAnos = Array.from(añosSet).sort((a, b) => parseInt(a) - parseInt(b));
+  const listaEntidades = Array.from(entidadesSet).sort();
 
-
-  const labels = Object.keys(agregados)
-
-    .filter(y => agregados[y].tienePeso || agregados[y].tieneValor)
-
-    .sort((a,b) => parseInt(a) - parseInt(b));
-
-
-
-  const weights = labels.map(y => agregados[y].tienePeso ? Math.round(agregados[y].pesoSum / 1000) : NaN); 
-
-  const valores = labels.map(y => agregados[y].tieneValor ? Math.round(agregados[y].valorSum / 1000000) : NaN); 
-
-
-
-  const ctx = document.getElementById('cap-chart').getContext('2d');
-
-  capChart = new Chart(ctx, {
-
-    type: 'bar',
-
-    data: {
-
-      labels: labels,
-
-      datasets: [
-
-        { type: 'bar', label: 'Peso Consolidado (Toneladas)', data: weights, backgroundColor: 'rgba(157,36,73,0.8)', borderColor: '#9D2449', borderWidth: 1, yAxisID: 'y' },
-
-        { type: 'line', label: 'Valor Consolidado (Millones MXP)', data: valores, borderColor: '#B38E5D', backgroundColor: 'rgba(179,142,93,0.15)', borderWidth: 3, pointRadius: 5, yAxisID: 'y1', spanGaps: false }
-
-      ]
-
-    },
-
-    options: {
-
-      responsive: true,
-
-      maintainAspectRatio: false,
-
-      interaction: { mode: 'index', intersect: false },
-
-      scales: {
-
-        y: { position: 'left', title: { display: true, text: 'Toneladas' } },
-
-        y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Millones MXP' } }
-
+  const datasetsApilados = listaEntidades.map((entidad, idx) => {
+    const dataPorAño = labelsAnos.map(year => {
+      if (matrizDatos[year] && matrizDatos[year][entidad]) {
+        return Math.round(matrizDatos[year][entidad] / 1000); // Conversión a Toneladas
       }
-
-    }
-
-  });
-
-}
-
-
-
-function renderDato(label, key, item) {
-
-  const val = item[key] || item[key + ':'] || '';
-
-  if (!val || val.trim() === '') return '';
-
-  return `<div class="data-item"><strong>${label}</strong><span>${val}</span></div>`;
-
-}
-
-
-
-function abrirFicha(valorComun) {
-
-  const itemFicha = datosFicha.find(d => d['Común'] === valorComun);
-
-  const itemIndice = datosIndice.find(d => d['Común'] === valorComun) || {};
-
-  const item = { ...itemIndice, ...(itemFicha || {}) };
-
-
-
-  const container = document.getElementById('ficha-container');
-
-  
-
-  const tituloPrincipal = item['Común'] || 'Especie';
-
-  const nombreComun = item['Nombre común'] || 'N/A';
-
-  const nombreCientifico = item['Nombre científico'] || item['Especie'] || '';
-
-  
-
-  let imgUrl = item['Imagenspp'] || item['Foto de la especie'];
-
-  let imgHTML = '';
-
-  if(imgUrl && imgUrl.startsWith('http')) {
-
-    imgHTML = `<div class="ficha-img-box"><img src="${imgUrl}" alt="${tituloPrincipal}"></div>`;
-
-  }
-
-
-
-  container.innerHTML = `
-
-    <div class="ficha-header">
-
-      ${imgHTML}
-
-      <div class="ficha-title-box">
-
-        <h1>${tituloPrincipal}</h1>
-
-        <div style="margin-bottom: 24px; border-bottom: 2px solid var(--gob-green); padding-bottom: 12px;">
-
-          <strong style="color:var(--primary); font-size:13px; text-transform:uppercase;">Nombre Común</strong>
-
-          <span style="font-size:20px; display:block; color:var(--text); font-weight:600; margin-top:4px;">${nombreComun}</span>
-
-          <em style="color:var(--text2); font-size:16px; display:block; margin-top:4px;">${nombreCientifico}</em>
-
-        </div>
-
-        <div style="display:flex; gap:24px; flex-wrap:wrap; background:#fff; padding:20px; border-radius:8px; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.05);">
-
-          ${renderDato('Estatus del cultivo', 'Estatus del cultivo', item)}
-
-          ${renderDato('Nivel de dominio biotecnológico', 'Nivel de dominio de la biotecnología', item)}
-
-          ${renderDato('Origen', 'Origen', item)}
-
-          ${renderDato('Mercado', 'Mercado', item)}
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-
-    <div class="ficha-grid">
-
-      <div class="ficha-card" style="grid-column: 1 / -1; padding:0; overflow:hidden;">
-
-        <h4 style="padding: 24px 24px 0 24px; border-bottom: none;">Distribución de UPAs para ${tituloPrincipal}</h4>
-
-        <div id="map-ficha"></div>
-
-      </div>
-
-
-
-      <div class="ficha-card">
-
-        <h4>Biología y Ecología</h4>
-
-        ${renderDato('Distribución geográfica', 'Distribución geográfica', item)}
-
-        ${renderDato('Hábitat (natural)', 'Hábitat (natural)', item)}
-
-        ${renderDato('Morfología', 'Morfología', item)}
-
-        ${renderDato('Ciclo de vida', 'Ciclo de vida', item)}
-
-        ${renderDato('Alimentación en medio natural', 'Alimentación en medio natural', item)}
-
-      </div>
-
-
-
-      <div class="ficha-card">
-
-        <h4>Biotecnología y Cultivo</h4>
-
-        ${renderDato('Biotecnología', 'Biotecnología', item)}
-
-        ${renderDato('Sistemas de cultivo', 'Sistemas de cultivo', item)}
-
-        ${renderDato('Artes de cultivo', 'Artes de cultivo', item)}
-
-        ${renderDato('Características de la zona', 'Características de la zona de cultivo', item)}
-
-        ${renderDato('Densidad de siembra', 'Densidad de siembra', item)}
-
-        ${renderDato('Flujo de agua', 'Promedio de flujo de agua para el cultivo', item)}
-
-        ${renderDato('Tamaño para siembra', 'Tamaño del organismo para siembra', item)}
-
-        ${renderDato('Origen / Procedencia semilla', 'Origen semilla', item)}
-
-        ${renderDato('Procedencia', 'Procedencia', item)}
-
-        ${renderDato('Alimento', 'ALIMENTO', item)}
-
-        ${renderDato('Tiempo de cultivo', 'Tiempo de cultivo', item)}
-
-        ${renderDato('Porcentaje de sobrevivencia', 'Porcentaje de sobrevivencia', item)}
-
-        ${renderDato('Tamaño de cosecha', 'Tamaño promedio de cosecha', item)}
-
-      </div>
-
-
-
-      <div class="ficha-card">
-
-        <h4>Sanidad y Comercialización</h4>
-
-        ${renderDato('Importancia de sanidad', 'Importancia de la sanidad acuícola', item)}
-
-        ${renderDato('Enfermedades reportadas', 'Enfermedades reportadas', item)}
-
-        ${renderDato('Sanidad general', 'Sanidad', item)}
-
-        ${renderDato('Buenas prácticas', 'Buenas prácticas de producción acuícola', item)}
-
-        ${renderDato('Comercialización', 'Comercialización', item)}
-
-        ${renderDato('Presentación del producto', 'Presentación del producto', item)}
-
-        ${renderDato('Precios', 'Precios del producto', item)}
-
-        ${renderDato('Mercado del producto', 'Mercado del producto', item)}
-
-      </div>
-
-
-
-      <div class="ficha-card" style="grid-column: 1 / -1;">
-
-        <h4>Información Detallada</h4>
-
-        ${renderDato('Manejo ecosistémico', 'MANEJO ECOSISTEMICO', item)}
-
-        ${renderDato('Efectos ambientales', 'Efectos ambientales y cambio climático', item)}
-
-        ${renderDato('Tecnología de alimentos', 'Tecnología de alimentos', item)}
-
-      </div>
-
-
-
-      <div class="ficha-card" style="grid-column: 1 / -1;">
-
-        <h4>Información Institucional</h4>
-
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:30px;">
-
-          <div>
-
-            ${renderDato('Entidades de cultivo', 'ENTIDADES DE CULTIVO', item)}
-
-            ${renderDato('Antecedentes', 'ANTECEDENTES', item)}
-
-            ${renderDato('Desarrollo tecnológico', 'Desarrollo tecnológico', item)}
-
-          </div>
-
-          <div>
-
-            ${renderDato('Limitantes técnico-biológicas', 'Limitantes técnico-biológicas de la actividad', item)}
-
-            ${renderDato('Información y trámites', 'INFORMACIÓN Y TRÁMITES', item)}
-
-            ${renderDato('Normatividad', 'NORMATIVIDAD', item)}
-
-            ${renderDato('Bibliografía', 'BIBLIOGRAFÍA CONSULTADA', item)}
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-
-      <div class="ficha-card" style="grid-column: 1 / -1;">
-
-        <h4>Datos Estadísticos de Captura Histórica</h4>
-
-        <div id="chart-ficha-wrapper" class="chart-ficha-container">
-
-           <canvas id="ficha-cap-chart"></canvas>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  `;
-
-
-
-  document.getElementById('main-dashboard').style.display = 'none';
-
-  document.getElementById('tab-ficha').style.display = 'block';
-
-  window.scrollTo(0, 0);
-
-
-
-  setTimeout(() => {
-
-    if(mapFichaInstance) mapFichaInstance.remove();
-
-    mapFichaInstance = L.map('map-ficha').setView([23.6345, -102.5528], 5);
-
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mapFichaInstance);
-
-    
-
-    const clusterFicha = L.markerClusterGroup();
-
-    let hayPuntos = false;
-
-
-
-    datosCoordenadas.forEach(upa => {
-
-      if ((upa['Común'] || '') === valorComun) {
-
-        const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
-
-        const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
-
-        if(!isNaN(lat) && !isNaN(lng)) {
-
-          hayPuntos = true;
-
-          const marker = L.marker([lat, lng]);
-
-          marker.bindPopup(`<div style="font-family:'Noto Sans'; font-size:13px;"><b>${upa['nombre_upa'] || 'Unidad'}</b></div>`);
-
-          clusterFicha.addLayer(marker);
-
-        }
-
-      }
-
+      return 0;
     });
 
+    return {
+      label: entidad,
+      data: dataPorAño,
+      backgroundColor: generarColorPorPaleta(idx, listaEntidades.length),
+      borderWidth: 0.5,
+      borderColor: '#ffffff'
+    };
+  });
 
+  const ctx = document.getElementById('cap-chart').getContext('2d');
+  capChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labelsAnos,
+      datasets: datasetsApilados
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { stacked: true },
+        y: { 
+          stacked: true, 
+          position: 'left', 
+          title: { display: true, text: 'Toneladas' } 
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { boxWidth: 12, font: { size: 11, family: 'Noto Sans' } }
+        }
+      }
+    }
+  });
+}
 
-    mapFichaInstance.addLayer(clusterFicha);
+function renderDato(label, key, item) {
+  const val = item[key] || item[key + ':'] || '';
+  if (!val || val.trim() === '') return '';
+  return `<div class="data-item"><strong>${label}</strong><span>${val}</span></div>`;
+}
 
-    if (hayPuntos) mapFichaInstance.fitBounds(clusterFicha.getBounds().pad(0.1));
+function abrirFicha(valorComun) {
+  const itemFicha = datosFicha.find(d => d['Común'] === valorComun);
+  const itemIndice = datosIndice.find(d => d['Común'] === valorComun) || {};
+  const item = { ...itemIndice, ...(itemFicha || {}) };
 
-  }, 100);
+  const container = document.getElementById('ficha-container');
+  
+  const tituloPrincipal = item['Común'] || 'Especie';
+  const nombreComun = item['Nombre común'] || 'N/A';
+  const nombreCientifico = item['Nombre científico'] || item['Especie'] || '';
+  
+  let imgUrl = item['Imagenspp'] || item['Foto de la especie'];
+  let imgHTML = '';
+  if(imgUrl && imgUrl.startsWith('http')) {
+    imgHTML = `<div class="ficha-img-box"><img src="${imgUrl}" alt="${tituloPrincipal}"></div>`;
+  }
 
+  container.innerHTML = `
+    <div class="ficha-header">
+      ${imgHTML}
+      <div class="ficha-title-box">
+        <h1>${tituloPrincipal}</h1>
+        <div style="margin-bottom: 24px; border-bottom: 2px solid var(--gob-green); padding-bottom: 12px;">
+          <strong style="color:var(--primary); font-size:13px; text-transform:uppercase;">Nombre Común</strong>
+          <span style="font-size:20px; display:block; color:var(--text); font-weight:600; margin-top:4px;">${nombreComun}</span>
+          <em style="color:var(--text2); font-size:16px; display:block; margin-top:4px;">${nombreCientifico}</em>
+        </div>
+        <div style="display:flex; gap:24px; flex-wrap:wrap; background:#fff; padding:20px; border-radius:8px; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.05);">
+          ${renderDato('Estatus del cultivo', 'Estatus del cultivo', item)}
+          ${renderDato('Nivel de dominio biotecnológico', 'Nivel de dominio de la biotecnología', item)}
+          ${renderDato('Origen', 'Origen', item)}
+          ${renderDato('Mercado', 'Mercado', item)}
+        </div>
+      </div>
+    </div>
 
+    <div class="ficha-grid">
+      <div class="ficha-card" style="grid-column: 1 / -1; padding:0; overflow:hidden;">
+        <h4 style="padding: 24px 24px 0 24px; border-bottom: none;">Distribución de UPAs para ${tituloPrincipal}</h4>
+        <div id="map-ficha"></div>
+      </div>
+
+      <div class="ficha-card">
+        <h4>Biología y Ecología</h4>
+        ${renderDato('Distribución geográfica', 'Distribución geográfica', item)}
+        ${renderDato('Hábitat (natural)', 'Hábitat (natural)', item)}
+        ${renderDato('Morfología', 'Morfología', item)}
+        ${renderDato('Ciclo de vida', 'Ciclo de vida', item)}
+        ${renderDato('Alimentación en medio natural', 'Alimentación en medio natural', item)}
+      </div>
+
+      <div class="ficha-card">
+        <h4>Biotecnología y Cultivo</h4>
+        ${renderDato('Biotecnología', 'Biotecnología', item)}
+        ${renderDato('Sistemas de cultivo', 'Sistemas de cultivo', item)}
+        ${renderDato('Artes de cultivo', 'Artes de cultivo', item)}
+        ${renderDato('Características de la zona', 'Características de la zona de cultivo', item)}
+        ${renderDato('Densidad de siembra', 'Densidad de siembra', item)}
+        ${renderDato('Flujo de agua', 'Promedio de flujo de agua para el cultivo', item)}
+        ${renderDato('Tamaño para siembra', 'Tamaño del organismo para siembra', item)}
+        ${renderDato('Origen / Procedencia semilla', 'Origen semilla', item)}
+        ${renderDato('Procedencia', 'Procedencia', item)}
+        ${renderDato('Alimento', 'ALIMENTO', item)}
+        ${renderDato('Tiempo de cultivo', 'Tiempo de cultivo', item)}
+        ${renderDato('Porcentaje de sobrevivencia', 'Porcentaje de sobrevivencia', item)}
+        ${renderDato('Tamaño de cosecha', 'Tamaño promedio de cosecha', item)}
+      </div>
+
+      <div class="ficha-card">
+        <h4>Sanidad y Comercialización</h4>
+        ${renderDato('Importancia de sanidad', 'Importancia de la sanidad acuícola', item)}
+        ${renderDato('Enfermedades reportadas', 'Enfermedades reportadas', item)}
+        ${renderDato('Sanidad general', 'Sanidad', item)}
+        ${renderDato('Buenas prácticas', 'Buenas prácticas de producción acuícola', item)}
+        ${renderDato('Comercialización', 'Comercialización', item)}
+        ${renderDato('Presentación del producto', 'Presentación del producto', item)}
+        ${renderDato('Precios', 'Precios del producto', item)}
+        ${renderDato('Mercado del producto', 'Mercado del producto', item)}
+      </div>
+
+      <div class="ficha-card" style="grid-column: 1 / -1;">
+        <h4>Información Detallada</h4>
+        ${renderDato('Manejo ecosistémico', 'MANEJO ECOSISTEMICO', item)}
+        ${renderDato('Efectos ambientales', 'Efectos ambientales y cambio climático', item)}
+        ${renderDato('Tecnología de alimentos', 'Tecnología de alimentos', item)}
+      </div>
+
+      <div class="ficha-card" style="grid-column: 1 / -1;">
+        <h4>Información Institucional</h4>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:30px;">
+          <div>
+            ${renderDato('Entidades de cultivo', 'ENTIDADES DE CULTIVO', item)}
+            ${renderDato('Antecedentes', 'ANTECEDENTES', item)}
+            ${renderDato('Desarrollo tecnológico', 'Desarrollo tecnológico', item)}
+          </div>
+          <div>
+            ${renderDato('Limitantes técnico-biológicas', 'Limitantes técnico-biológicas de la actividad', item)}
+            ${renderDato('Información y trámites', 'INFORMACIÓN Y TRÁMITES', item)}
+            ${renderDato('Normatividad', 'NORMATIVIDAD', item)}
+            ${renderDato('Bibliografía', 'BIBLIOGRAFÍA CONSULTADA', item)}
+          </div>
+        </div>
+      </div>
+
+      <div class="ficha-card" style="grid-column: 1 / -1;">
+        <h4>Datos Estadísticos de Captura Histórica</h4>
+        <div id="chart-ficha-wrapper" class="chart-ficha-container">
+           <canvas id="ficha-cap-chart"></canvas>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('main-dashboard').style.display = 'none';
+  document.getElementById('tab-ficha').style.display = 'block';
+  window.scrollTo(0, 0);
 
   setTimeout(() => {
+    if(mapFichaInstance) mapFichaInstance.remove();
+    mapFichaInstance = L.map('map-ficha').setView([23.6345, -102.5528], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mapFichaInstance);
+    
+    const clusterFicha = L.markerClusterGroup();
+    let hayPuntos = false;
 
-    if (chartFichaInstance) chartFichaInstance.destroy();
+    datosCoordenadas.forEach(upa => {
+      if ((upa['Común'] || '') === valorComun) {
+        const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
+        const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
+        if(!isNaN(lat) && !isNaN(lng)) {
+          hayPuntos = true;
+          const marker = L.marker([lat, lng]);
+          marker.bindPopup(`<div style="font-family:'Noto Sans'; font-size:13px;"><b>${upa['nombre_upa'] || 'Unidad'}</b></div>`);
+          clusterFicha.addLayer(marker);
+        }
+      }
+    });
 
-    const datosFiltradosCap = datosCaptura.filter(item => item['Común'] === valorComun);
-
-    if (datosFiltradosCap.length > 0) {
-
-        const agregadosPorAno = {};
-
-        datosFiltradosCap.forEach(d => {
-
-            const year = d['AÑO'] || d['Año'] || d['anio'];
-
-            const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
-
-            if (year) {
-
-                if (!agregadosPorAno[year]) agregadosPorAno[year] = 0;
-
-                agregadosPorAno[year] += peso;
-
-            }
-
-        });
-
-
-
-        const labels = Object.keys(agregadosPorAno).sort((a, b) => parseInt(a) - parseInt(b));
-
-        const dataKg = labels.map(year => agregadosPorAno[year]);
-
-
-
-        const ctxFicha = document.getElementById('ficha-cap-chart').getContext('2d');
-
-        chartFichaInstance = new Chart(ctxFicha, {
-
-            type: 'line',
-
-            data: {
-
-                labels: labels,
-
-                datasets: [{
-
-                    label: 'Captura Anual (Kg)',
-
-                    data: dataKg,
-
-                    backgroundColor: 'rgba(157,36,73,0.15)',
-
-                    borderColor: '#9D2449',
-
-                    borderWidth: 2,
-
-                    fill: true
-
-                }]
-
-            }
-
-        });
-
-    } else {
-
-        document.getElementById('chart-ficha-wrapper').innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:40px;">Sin historial estadístico disponible para esta especie.</p>`;
-
-    }
-
+    mapFichaInstance.addLayer(clusterFicha);
+    if (hayPuntos) mapFichaInstance.fitBounds(clusterFicha.getBounds().pad(0.1));
   }, 100);
 
+  setTimeout(() => {
+    if (chartFichaInstance) chartFichaInstance.destroy();
+    const datosFiltradosCap = datosCaptura.filter(item => item['Común'] === valorComun);
+    if (datosFiltradosCap.length > 0) {
+        const agregadosPorAno = {};
+        datosFiltradosCap.forEach(d => {
+            const year = d['AÑO'] || d['Año'] || d['anio'];
+            const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
+            if (year) {
+                if (!agregadosPorAno[year]) agregadosPorAno[year] = 0;
+                agregadosPorAno[year] += peso;
+            }
+        });
+
+        const labels = Object.keys(agregadosPorAno).sort((a, b) => parseInt(a) - parseInt(b));
+        const dataKg = labels.map(year => agregadosPorAno[year]);
+
+        const ctxFicha = document.getElementById('ficha-cap-chart').getContext('2d');
+        chartFichaInstance = new Chart(ctxFicha, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Captura Anual (Kg)',
+                    data: dataKg,
+                    backgroundColor: 'rgba(157,36,73,0.15)',
+                    borderColor: '#9D2449',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            }
+        });
+    } else {
+        document.getElementById('chart-ficha-wrapper').innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:40px;">Sin historial estadístico disponible para esta especie.</p>`;
+    }
+  }, 100);
 }
-
-
 
 function cerrarFicha() {
-
   document.getElementById('tab-ficha').style.display = 'none';
-
   document.getElementById('main-dashboard').style.display = 'grid';
-
   setTimeout(() => { if(map) map.invalidateSize(); }, 50);
-
 }
 
-
-
 window.onload = sincronizarGoogleSheets;
-
 </script>
-
 </body>
-
 </html>
