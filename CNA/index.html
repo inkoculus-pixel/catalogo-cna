@@ -178,6 +178,13 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 .main-row{transition: background 0.2s; cursor: pointer;}
 .main-row:hover{background:#fafafa;}
+.expander {
+  font-size: 10px;
+  color: var(--primary);
+  margin-right: 8px;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
 .details-row{display:none; background:#fafafa;}
 .details-content{padding:16px 20px; border-left:4px solid var(--primary); color:var(--text2); font-size:13px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;}
 
@@ -229,7 +236,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v2.7</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v2.8</span></h2>
 </header>
 
 <div id="loader">
@@ -290,6 +297,9 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 /**
  * HISTORIAL DE CAMBIOS (RNIIPA)
  * -------------------------------------------------------------------------
+ * v2.8 - 2026-06-05:
+ * - Solución de reinicio al global en gráficas y mapas cuando se limpia el buscador.
+ * - Adición de indicador de colapso/expansión (▼) en la tabla principal.
  * v2.7 - 2026-06-05:
  * - Layout unificado: Buscador superior, 2 columnas (mapa/gráfica), tabla inferior.
  * - Títulos dinámicos de filtrado para mapa y gráfica.
@@ -297,9 +307,6 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
  * v2.6 - 2026-06-05:
  * - Aplicación estricta de la nueva paleta de colores institucionales.
  * - Eliminación del texto del footer conservando la decoración gráfica.
- * v2.5 - 2026-06-05:
- * - Búsqueda global cruzada y agrupación top 5 en gráficos.
- * - Fondo de aplicación en blanco puro.
  */
 
 const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
@@ -368,6 +375,11 @@ function renderTabla(datos) {
       const isHidden = trDetails.style.display === 'none' || trDetails.style.display === '';
       trDetails.style.display = isHidden ? 'table-row' : 'none';
       tr.style.background = isHidden ? 'rgba(155, 34, 71, 0.05)' : '';
+      
+      const expander = tr.querySelector('.expander');
+      if (expander) {
+        expander.style.transform = isHidden ? 'rotate(-180deg)' : 'rotate(0deg)';
+      }
     };
 
     let nombreCeldaHTML = '';
@@ -378,7 +390,7 @@ function renderTabla(datos) {
     }
 
     tr.innerHTML = `
-      <td>${item['Recurso'] || ''}</td>
+      <td><span class="expander">▼</span> ${item['Recurso'] || ''}</td>
       <td>${nombreCeldaHTML}</td>
       <td><em>${item['Especie'] || item['Nombre científico'] || ''}</em></td>
       <td>${item['Litoral'] || ''}</td>
@@ -410,7 +422,6 @@ function matchesFiltro(obj, input) {
 function filtrarDashboardGlobal() {
   const input = document.getElementById("search-esp").value.toLowerCase().trim();
   
-  // Actualizar Títulos Dinámicos
   const mapTitleText = document.querySelector("#map-title .titulo-dinamico-filtro");
   const chartTitleText = document.querySelector("#chart-title .titulo-dinamico-filtro");
   
@@ -489,7 +500,11 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
   const overlay = document.getElementById('map-empty-overlay');
   if (puntosVisibles) {
     overlay.style.display = 'none';
-    map.fitBounds(markerCluster.getBounds().pad(0.1));
+    if (!input || input.trim() === '') {
+      map.setView([23.6345, -102.5528], 5);
+    } else {
+      map.fitBounds(markerCluster.getBounds().pad(0.1));
+    }
   } else {
     overlay.style.display = 'flex';
     overlay.innerText = "Sin registros de coordenadas asociadas a esta ubicación o criterio";
@@ -504,8 +519,12 @@ function generarColorPorPaleta(index, total) {
 function actualizarGraficaConsolidada(comunesValidos, input = '') {
   const container = document.getElementById('global-chart-wrapper');
   
+  if (capChart) {
+    capChart.destroy();
+    capChart = null;
+  }
+
   if (comunesValidos.length === 0) {
-    if (capChart) capChart.destroy();
     container.innerHTML = `<p style="color:var(--primary); text-align:center; padding-top:60px; font-family:'Noto Sans'; font-weight:600;">Sin registros estadísticos de producción</p>`;
     return;
   }
@@ -524,7 +543,6 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
   });
   
   if (datosFiltrados.length === 0) {
-    if (capChart) capChart.destroy();
     container.innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:60px; font-family:'Noto Sans';">Sin registros estadísticos de producción para la selección y región</p>`;
     return;
   }
