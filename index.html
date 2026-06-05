@@ -158,6 +158,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 /* ENLACE DE TABLA */
 .link-especie{color:var(--primary); text-decoration:none; font-weight:700; cursor:pointer;}
 .link-especie:hover{text-decoration:underline; color:var(--secondary);}
+.no-link-especie{color:var(--text); font-weight:500; cursor:default;}
 
 /* FICHA TÉCNICA */
 .btn-back{background:#fff; border:1px solid var(--border); padding:10px 20px; border-radius:6px; cursor:pointer; font-family:'Montserrat'; font-weight:600; color:var(--gob-green); margin-bottom:24px; display:inline-flex; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05);}
@@ -208,7 +209,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Micrositio RNIIPA - Tablero Unificado de Control <span class="version-badge">v2.3</span></h2>
+  <h2>Micrositio RNIIPA - Tablero Unificado de Control <span class="version-badge">v2.4</span></h2>
 </header>
 
 <div id="loader">
@@ -247,7 +248,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
     </div>
     
     <div class="chart-wrap">
-      <h3>Histórico Consolidado de Captura (Filtro Activo)</h3>
+      <h3>Histórico Consolidado de Acuacultura por Entidad (Filtro Activo)</h3>
       <div class="chart-container-box" id="global-chart-wrapper">
         <canvas id="cap-chart" height="180"></canvas>
       </div>
@@ -274,7 +275,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
     <h3>Contacto</h3>
     <p>Mesa de ayuda: dudas e información</p>
     <p>gobmx@funcionpublica.gob.mx</p>
-    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 2.3</p>
+    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 2.4</p>
   </div>
 </footer>
 
@@ -282,9 +283,12 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 /**
  * HISTORIAL DE CAMBIOS (RNIIPA)
  * -------------------------------------------------------------------------
- * v2.3 - 2026-06-05:
- * - Entrega consolidada del código fuente completo bajo requerimiento del operador.
- * - Sincronización robusta de componentes dinámicos en una arquitectura SPA de vista única.
+ * v2.4 - 2026-06-05:
+ * - Remoción de variables financieras (Valor Pesos) de los análisis estadísticos.
+ * - Redirección de enfoque operativo a exclusividad de datos de Acuacultura.
+ * - Implementación de gráfica de barras apiladas (stacked) estructurada por "ENTIDAD".
+ * - Ajuste lógico en renderizado de tabla para habilitar fichas técnicas únicamente a filas con datos válidos en "Común".
+ * v2.3 - Entrega consolidada del código fuente completo bajo requerimiento del operador.
  * v2.2 - Ajuste dinámico de ejes en Chart.js para omitir años sin registros numéricos de captura.
  * v2.1 - Sanitización de strings en columnas financieras de Google Sheets.
  */
@@ -301,6 +305,22 @@ let capChart;
 let mapFichaInstance = null; 
 let chartFichaInstance = null;
 
+// Paleta de colores extendida para entidades federativas en gráficas
+const PALETA_ENTIDADES = [
+  'rgba(157, 36, 73, 0.85)',  // Guinda institucional
+  'rgba(179, 142, 93, 0.85)', // Dorado institucional
+  'rgba(19, 50, 43, 0.85)',   // Verde institucional
+  'rgba(70, 22, 38, 0.85)',   // Guinda oscuro
+  'rgba(112, 90, 59, 0.85)',  // Dorado oscuro
+  'rgba(41, 128, 185, 0.85)', // Azul
+  'rgba(39, 174, 96, 0.85)',  // Verde claro
+  'rgba(142, 68, 173, 0.85)', // Morado
+  'rgba(230, 126, 34, 0.85)', // Naranja
+  'rgba(52, 73, 94, 0.85)',   // Gris azulado
+  'rgba(22, 160, 133, 0.85)', // Turquesa
+  'rgba(211, 84, 0, 0.85)'    // Óxido
+];
+
 async function sincronizarGoogleSheets() {
   try {
     const urlIndice = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=indice`;
@@ -310,7 +330,7 @@ async function sincronizarGoogleSheets() {
 
     const [resIndice, resCoord, resCaptura, resFicha] = await Promise.all([
       fetch(urlIndice), 
-      fetch(urlCoordenadas), 
+      fetch(resCoord), 
       fetch(urlCaptura).catch(() => null),
       fetch(urlFicha).catch(() => null)
     ]);
@@ -344,7 +364,7 @@ function renderTabla(datos) {
   }
 
   datos.forEach((item) => {
-    const valorComun = item['Común'] || '';
+    const valorComun = (item['Común'] || '').trim();
     const displayNombre = item['Nombre común'] || valorComun || 'Sin nombre';
     
     const tr = document.createElement('tr');
@@ -357,9 +377,16 @@ function renderTabla(datos) {
       tr.style.background = isHidden ? '#f8f0f2' : '';
     };
 
+    let tdNombreHTML = '';
+    if (valorComun !== '') {
+      tdNombreHTML = `<a class="link-especie" data-comun="${valorComun}" onclick="abrirFicha(this.getAttribute('data-comun'))">${displayNombre}</a>`;
+    } else {
+      tdNombreHTML = `<span class="no-link-especie">${displayNombre}</span>`;
+    }
+
     tr.innerHTML = `
       <td>${item['Recurso'] || ''}</td>
-      <td><a class="link-especie" data-comun="${valorComun}" onclick="abrirFicha(this.getAttribute('data-comun'))">${displayNombre}</a></td>
+      <td>${tdNombreHTML}</td>
       <td><em>${item['Especie'] || item['Nombre científico'] || ''}</em></td>
       <td>${item['Litoral'] || ''}</td>
     `;
@@ -456,7 +483,7 @@ function actualizarGraficaConsolidada(comunesValidos) {
   
   if (comunesValidos.length === 0) {
     if (capChart) capChart.destroy();
-    container.innerHTML = `<p style="color:var(--primary); text-align:center; padding-top:60px; font-family:'Noto Sans'; font-weight:600;">Sin registros estadísticos de captura</p>`;
+    container.innerHTML = `<p style="color:var(--primary); text-align:center; padding-top:60px; font-family:'Noto Sans'; font-weight:600;">Sin registros estadísticos de acuacultura</p>`;
     return;
   }
 
@@ -464,64 +491,79 @@ function actualizarGraficaConsolidada(comunesValidos) {
   
   if (datosFiltrados.length === 0) {
     if (capChart) capChart.destroy();
-    container.innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:60px; font-family:'Noto Sans';">Sin registros estadísticos de captura para la selección</p>`;
+    container.innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:60px; font-family:'Noto Sans';">Sin registros estadísticos de acuacultura para la selección</p>`;
     return;
   }
 
   container.innerHTML = `<canvas id="cap-chart" height="180"></canvas>`;
 
-  const agregados = {};
+  const estructurado = {}; 
+  const conjuntoEntidades = new Set();
+  const conjuntoAnios = new Set();
+
   datosFiltrados.forEach(d => {
     const year = (d['AÑO'] || d['Año'] || d['anio'] || '').toString().trim();
+    let entidad = (d['ENTIDAD'] || d['Entidad'] || d['estado'] || 'No Especificado').toString().trim().toUpperCase();
     if (!year) return;
 
     let rawPeso = d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso'] || '';
-    let rawValor = d['VALOR (PESOS)'] || d['valor_pesos'] || d['Valor'] || '';
-
     if (typeof rawPeso === 'string') rawPeso = rawPeso.replace(/[^0-9.]/g, '');
-    if (typeof rawValor === 'string') rawValor = rawValor.replace(/[^0-9.]/g, '');
-
     const pesoParsed = parseFloat(rawPeso);
-    const valorParsed = parseFloat(rawValor);
-
-    if(!agregados[year]) {
-      agregados[year] = { pesoSum: 0, valorSum: 0, tienePeso: false, tieneValor: false };
-    }
 
     if (!isNaN(pesoParsed) && pesoParsed > 0) {
-      agregados[year].pesoSum += pesoParsed;
-      agregados[year].tienePeso = true;
-    }
-    if (!isNaN(valorParsed) && valorParsed > 0) {
-      agregados[year].valorSum += valorParsed;
-      agregados[year].tieneValor = true;
+      conjuntoAnios.add(year);
+      conjuntoEntidades.add(entidad);
+
+      if (!estructurado[year]) estructurado[year] = {};
+      if (!estructurado[year][entidad]) estructurado[year][entidad] = 0;
+
+      estructurado[year][entidad] += pesoParsed;
     }
   });
 
-  const labels = Object.keys(agregados)
-    .filter(y => agregados[y].tienePeso || agregados[y].tieneValor)
-    .sort((a,b) => parseInt(a) - parseInt(b));
+  const labelsAnios = Array.from(conjuntoAnios).sort((a, b) => parseInt(a) - parseInt(b));
+  const listaEntidades = Array.from(conjuntoEntidades).sort();
 
-  const weights = labels.map(y => agregados[y].tienePeso ? Math.round(agregados[y].pesoSum / 1000) : NaN); 
-  const valores = labels.map(y => agregados[y].tieneValor ? Math.round(agregados[y].valorSum / 1000000) : NaN); 
+  if (labelsAnios.length === 0) {
+    container.innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:60px; font-family:'Noto Sans';">Sin registros numéricos válidos de peso</p>`;
+    return;
+  }
+
+  const datasetsBarrasApiladas = listaEntidades.map((entidad, index) => {
+    const dataPorAnio = labelsAnios.map(year => {
+      const totalKg = estructurado[year] && estructurado[year][entidad] ? estructurado[year][entidad] : 0;
+      return Math.round(totalKg / 1000); // Conversión a toneladas métricas
+    });
+
+    const colorColoracion = PALETA_ENTIDADES[index % PALETA_ENTIDADES.length];
+
+    return {
+      label: entidad,
+      data: dataPorAnio,
+      backgroundColor: colorColoracion,
+      borderColor: colorColoracion.replace('0.85', '1'),
+      borderWidth: 1
+    };
+  });
 
   const ctx = document.getElementById('cap-chart').getContext('2d');
   capChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: labels,
-      datasets: [
-        { type: 'bar', label: 'Peso Consolidado (Toneladas)', data: weights, backgroundColor: 'rgba(157,36,73,0.8)', borderColor: '#9D2449', borderWidth: 1, yAxisID: 'y' },
-        { type: 'line', label: 'Valor Consolidado (Millones MXP)', data: valores, borderColor: '#B38E5D', backgroundColor: 'rgba(179,142,93,0.15)', borderWidth: 3, pointRadius: 5, yAxisID: 'y1', spanGaps: false }
-      ]
+      labels: labelsAnios,
+      datasets: datasetsBarrasApiladas
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       scales: {
-        y: { position: 'left', title: { display: true, text: 'Toneladas' } },
-        y1: { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Millones MXP' } }
+        x: { stacked: true },
+        y: { 
+          stacked: true,
+          position: 'left', 
+          title: { display: true, text: 'Peso Consolidado (Toneladas)' } 
+        }
       }
     }
   });
@@ -534,6 +576,7 @@ function renderDato(label, key, item) {
 }
 
 function abrirFicha(valorComun) {
+  if (!valorComun) return;
   const itemFicha = datosFicha.find(d => d['Común'] === valorComun);
   const itemIndice = datosIndice.find(d => d['Común'] === valorComun) || {};
   const item = { ...itemIndice, ...(itemFicha || {}) };
@@ -592,7 +635,7 @@ function abrirFicha(valorComun) {
         ${renderDato('Características de la zona', 'Características de la zona de cultivo', item)}
         ${renderDato('Densidad de siembra', 'Densidad de siembra', item)}
         ${renderDato('Flujo de agua', 'Promedio de flujo de agua para el cultivo', item)}
-        ${renderDato('Tamaño para siembra', 'Tamaño del organismo para siembra', item)}
+        ${renderDato('Tamaño para siembra', 'Tamaño del organism para siembra', item)}
         ${renderDato('Origen / Procedencia semilla', 'Origen semilla', item)}
         ${renderDato('Procedencia', 'Procedencia', item)}
         ${renderDato('Alimento', 'ALIMENTO', item)}
@@ -638,7 +681,7 @@ function abrirFicha(valorComun) {
       </div>
 
       <div class="ficha-card" style="grid-column: 1 / -1;">
-        <h4>Datos Estadísticos de Captura Histórica</h4>
+        <h4>Datos Estadísticos de Evolución Histórica (Kg)</h4>
         <div id="chart-ficha-wrapper" class="chart-ficha-container">
            <canvas id="ficha-cap-chart"></canvas>
         </div>
@@ -659,7 +702,7 @@ function abrirFicha(valorComun) {
     let hayPuntos = false;
 
     datosCoordenadas.forEach(upa => {
-      if ((upa['Común'] || '') === valorComun) {
+      if ((upa['Común'] || '').trim() === valorComun) {
         const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
         const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
         if(!isNaN(lat) && !isNaN(lng)) {
@@ -698,7 +741,7 @@ function abrirFicha(valorComun) {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Captura Anual (Kg)',
+                    label: 'Producción Anual (Kg)',
                     data: dataKg,
                     backgroundColor: 'rgba(157,36,73,0.15)',
                     borderColor: '#9D2449',
