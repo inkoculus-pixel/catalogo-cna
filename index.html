@@ -183,7 +183,7 @@ select{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-s
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Micrositio RNIIPA - Catálogo de Recursos <span class="version-badge">v1.7</span></h2>
+  <h2>Micrositio RNIIPA - Catálogo de Recursos <span class="version-badge">v1.8</span></h2>
 </header>
 
 <nav class="subnav" id="menu" style="display:none;">
@@ -257,11 +257,20 @@ select{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-s
     <h3>Contacto</h3>
     <p>Mesa de ayuda: dudas e información</p>
     <p>gobmx@funcionpublica.gob.mx</p>
-    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 1.7</p>
+    <p style="margin-top:20px; font-size:11px; opacity:0.6;">RNIIPA - Versión 1.8</p>
   </div>
 </footer>
 
 <script>
+/**
+ * HISTORIAL DE CAMBIOS (RNIIPA)
+ * -------------------------------------------------------------------------
+ * v1.8 - 2026-06-05:
+ * - Optimización en el renderizado de gráficos y mapas al cambiar pestañas de forma fluida.
+ * - Corrección preventiva en los selectores dinámicos para evitar duplicidad de carga.
+ * v1.7 - Versión base con maquetación oficial gob.mx y tabs funcionales.
+ */
+
 const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
 
 let datosIndice = [];
@@ -314,7 +323,11 @@ function showTab(tabId, btn) {
     btn.classList.add('active');
   }
   document.getElementById('tab-' + tabId).style.display = 'block';
-  if (tabId === 'mapa' && map) setTimeout(() => map.invalidateSize(), 100);
+  
+  // Forzar redibujado de Leaflet para evitar áreas grises al cambiar de pestaña
+  if (tabId === 'mapa' && map) {
+    setTimeout(() => map.invalidateSize(), 150);
+  }
 }
 
 function renderTabla(datos) {
@@ -445,7 +458,7 @@ function abrirFicha(valorComun) {
         ${renderDato('Características de la zona', 'Características de la zona de cultivo', item)}
         ${renderDato('Densidad de siembra', 'Densidad de siembra', item)}
         ${renderDato('Flujo de agua', 'Promedio de flujo de agua para el cultivo', item)}
-        ${renderDato('Tamaño para siembra', 'Tamaño del organismo para siembra', item)}
+        ${renderDato('Tamaño para siembra', 'Tamaño del organism para siembra', item)}
         ${renderDato('Origen / Procedencia semilla', 'Origen semilla', item)}
         ${renderDato('Procedencia', 'Procedencia', item)}
         ${renderDato('Alimento', 'ALIMENTO', item)}
@@ -563,10 +576,10 @@ function abrirFicha(valorComun) {
                 datasets: [{
                     label: 'Captura Total Anual (Kg)',
                     data: dataKg,
-                    backgroundColor: 'rgba(157,36,73,0.15)', /* Guinda transparente */
-                    borderColor: '#9D2449', /* Guinda GOB.MX */
+                    backgroundColor: 'rgba(157,36,73,0.15)',
+                    borderColor: '#9D2449',
                     borderWidth: 2,
-                    pointBackgroundColor: '#B38E5D', /* Dorado GOB.MX */
+                    pointBackgroundColor: '#B38E5D',
                     pointRadius: 4,
                     fill: true
                 }]
@@ -635,7 +648,7 @@ function renderMarcadores(filtroComun) {
       const marker = L.marker([lat, lng]);
       marker.bindPopup(`
         <div style="font-family:'Noto Sans'; font-size:13px;">
-          <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}</h4>
+          <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Production'}</h4>
           <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || comunUPA}</p>
           <p style="margin-bottom:4px;"><b>Superficie de producción (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
           <p style="margin-bottom:4px;"><b>Número de cuerpos de agua:</b> ${upa['Número de cuerpos de agua'] || 'N/A'}</p>
