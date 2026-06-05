@@ -35,7 +35,7 @@
   --text2: #98989A;
   
   --bg: #ffffff; 
-  --border: rgba(152, 152, 154, 0.4); /* Basado en #98989A para mantener sutileza en tablas */
+  --border: rgba(152, 152, 154, 0.4);
 }
 body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh;}
 
@@ -84,23 +84,32 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
   font-family: 'Noto Sans', sans-serif;
 }
 
-/* LAYOUT UNIFICADO (DASHBOARD) */
+/* LAYOUT REESTRUCTURADO */
 .dashboard-container {
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
   padding: 30px 5%;
   max-width: 1800px;
   margin: 0 auto;
 }
-@media (max-width: 1200px) {
-  .dashboard-container { grid-template-columns: 1fr; }
+
+.filter-section {
+  width: 100%;
 }
 
-.dashboard-panel {
-  display: flex;
-  flex-direction: column;
+.map-chart-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 24px;
+}
+
+@media (max-width: 1200px) {
+  .map-chart-section { grid-template-columns: 1fr; }
+}
+
+.table-section {
+  width: 100%;
 }
 
 .tab-content{display:none; padding:30px 5% 40px 5%; max-width:1600px; margin:0 auto;}
@@ -118,6 +127,8 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
   box-shadow: 0 1px 4px rgba(0,0,0,.08);
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 .map-card h3, .chart-wrap h3 {
   padding: 16px 20px;
@@ -128,7 +139,13 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-#map{height: 400px; width:100%; z-index: 1;}
+.titulo-dinamico-filtro {
+  color: var(--primary);
+  font-weight: 700;
+  text-transform: none;
+}
+
+#map{height: 400px; width:100%; z-index: 1; flex-grow: 1;}
 
 #map-empty-overlay {
   display: none;
@@ -144,8 +161,9 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
 }
 
 /* TABLA EXPANDIBLE */
-.filter-bar{display:flex;gap:12px;margin-bottom:16px;}
-.filter-bar input{padding:12px 16px;border:1px solid var(--border);border-radius:6px;font-size:14px;flex:1; font-family:'Noto Sans';}
+.filter-bar{display:flex;gap:12px;}
+.filter-bar input{padding:16px 20px;border:1px solid var(--border);border-radius:8px;font-size:15px;flex:1; font-family:'Noto Sans'; box-shadow: 0 1px 4px rgba(0,0,0,.05);}
+.filter-bar input:focus{outline:none; border-color:var(--primary);}
 .table-wrap {
   background:#fff;
   border-radius:8px;
@@ -188,11 +206,11 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 #map-ficha{height:400px; width:100%; border-radius:0 0 8px 8px; z-index:1;}
 .chart-ficha-container{position: relative; height: 350px; width: 100%;}
 
-/* CAPTURA GLOBAL */
-.chart-wrap{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); overflow: hidden;}
-.chart-container-box { padding: 20px; position: relative; min-height: 260px; }
+/* GRÁFICA GLOBAL */
+.chart-wrap{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column;}
+.chart-container-box { padding: 20px; position: relative; min-height: 360px; flex-grow: 1;}
 
-/* FOOTER GOB.MX OFICIAL MODIFICADO */
+/* FOOTER GOB.MX OFICIAL */
 .gobmx-footer {
   background-color: var(--gob-green);
   height: 60px;
@@ -211,7 +229,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v2.6</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v2.7</span></h2>
 </header>
 
 <div id="loader">
@@ -221,11 +239,28 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
   
-  <div class="dashboard-panel">
+  <div class="filter-section">
     <div class="filter-bar">
       <input type="text" id="search-esp" placeholder="Buscar por recurso, nombre común, especie, zona o entidad..." onkeyup="filtrarDashboardGlobal()">
     </div>
+  </div>
+  
+  <div class="map-chart-section">
+    <div class="map-card">
+      <h3 id="map-title">Distribución Geográfica de UPAs <span class="titulo-dinamico-filtro">(Global)</span></h3>
+      <div id="map-empty-overlay">Sin registros de coordenadas asociadas</div>
+      <div id="map"></div>
+    </div>
     
+    <div class="chart-wrap">
+      <h3 id="chart-title">Histórico de Producción por Entidad <span class="titulo-dinamico-filtro">(Global)</span></h3>
+      <div class="chart-container-box" id="global-chart-wrapper">
+        <canvas id="cap-chart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-section">
     <div class="table-wrap">
       <table id="tabla-recursos">
         <thead>
@@ -240,23 +275,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
       </table>
     </div>
   </div>
-  
-  <div class="dashboard-panel">
-    
-    <div class="map-card">
-      <h3>Distribución Geográfica de UPAs Filtradas</h3>
-      <div id="map-empty-overlay">Sin registros de coordenadas asociadas</div>
-      <div id="map"></div>
-    </div>
-    
-    <div class="chart-wrap">
-      <h3>Histórico de Captura por Entidad (Filtro Activo)</h3>
-      <div class="chart-container-box" id="global-chart-wrapper">
-        <canvas id="cap-chart" height="180"></canvas>
-      </div>
-    </div>
-    
-  </div>
+
 </div>
 
 <div id="tab-ficha" class="tab-content">
@@ -265,21 +284,22 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 </div>
 
 <footer class="gobmx-footer">
-  </footer>
+</footer>
 
 <script>
 /**
  * HISTORIAL DE CAMBIOS (RNIIPA)
  * -------------------------------------------------------------------------
+ * v2.7 - 2026-06-05:
+ * - Layout unificado: Buscador superior, 2 columnas (mapa/gráfica), tabla inferior.
+ * - Títulos dinámicos de filtrado para mapa y gráfica.
+ * - Cambio de nomenclatura de "Captura" a "Producción".
  * v2.6 - 2026-06-05:
  * - Aplicación estricta de la nueva paleta de colores institucionales.
  * - Eliminación del texto del footer conservando la decoración gráfica.
  * v2.5 - 2026-06-05:
  * - Búsqueda global cruzada y agrupación top 5 en gráficos.
  * - Fondo de aplicación en blanco puro.
- * v2.4 - 2026-06-05:
- * - Eliminación del valor comercial y rearquitectura de gráfica.
- * v2.3 - Sincronización robusta de componentes dinámicos en SPA.
  */
 
 const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
@@ -315,7 +335,7 @@ async function sincronizarGoogleSheets() {
     if(resFicha && resFicha.ok) datosFicha = Papa.parse(await resFicha.text(), { header: true, skipEmptyLines: true }).data;
 
     document.getElementById('loader').style.display = 'none';
-    document.getElementById('main-dashboard').style.display = 'grid';
+    document.getElementById('main-dashboard').style.display = 'flex';
     
     renderTabla(datosIndice);
     initMap();
@@ -390,6 +410,18 @@ function matchesFiltro(obj, input) {
 function filtrarDashboardGlobal() {
   const input = document.getElementById("search-esp").value.toLowerCase().trim();
   
+  // Actualizar Títulos Dinámicos
+  const mapTitleText = document.querySelector("#map-title .titulo-dinamico-filtro");
+  const chartTitleText = document.querySelector("#chart-title .titulo-dinamico-filtro");
+  
+  if (input) {
+      mapTitleText.innerText = `- Filtro: "${input}"`;
+      chartTitleText.innerText = `- Filtro: "${input}"`;
+  } else {
+      mapTitleText.innerText = `(Global)`;
+      chartTitleText.innerText = `(Global)`;
+  }
+
   const comunesQueHacenMatch = new Set();
 
   datosIndice.forEach(item => { if(matchesFiltro(item, input)) comunesQueHacenMatch.add(item['Común']); });
@@ -474,7 +506,7 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
   
   if (comunesValidos.length === 0) {
     if (capChart) capChart.destroy();
-    container.innerHTML = `<p style="color:var(--primary); text-align:center; padding-top:60px; font-family:'Noto Sans'; font-weight:600;">Sin registros estadísticos de captura</p>`;
+    container.innerHTML = `<p style="color:var(--primary); text-align:center; padding-top:60px; font-family:'Noto Sans'; font-weight:600;">Sin registros estadísticos de producción</p>`;
     return;
   }
 
@@ -493,11 +525,11 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
   
   if (datosFiltrados.length === 0) {
     if (capChart) capChart.destroy();
-    container.innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:60px; font-family:'Noto Sans';">Sin registros estadísticos de captura para la selección y región</p>`;
+    container.innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:60px; font-family:'Noto Sans';">Sin registros estadísticos de producción para la selección y región</p>`;
     return;
   }
 
-  container.innerHTML = `<canvas id="cap-chart" height="180"></canvas>`;
+  container.innerHTML = `<canvas id="cap-chart"></canvas>`;
 
   const añosSet = new Set();
   const matrizDatos = {};
@@ -698,7 +730,7 @@ function abrirFicha(valorComun) {
       </div>
 
       <div class="ficha-card" style="grid-column: 1 / -1;">
-        <h4>Datos Estadísticos de Captura Histórica</h4>
+        <h4>Datos Estadísticos de Producción Histórica</h4>
         <div id="chart-ficha-wrapper" class="chart-ficha-container">
            <canvas id="ficha-cap-chart"></canvas>
         </div>
@@ -758,7 +790,7 @@ function abrirFicha(valorComun) {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Captura Anual (Kg)',
+                    label: 'Producción Anual (Kg)',
                     data: dataKg,
                     backgroundColor: 'rgba(155, 34, 71, 0.15)',
                     borderColor: '#9b2247',
@@ -775,7 +807,7 @@ function abrirFicha(valorComun) {
 
 function cerrarFicha() {
   document.getElementById('tab-ficha').style.display = 'none';
-  document.getElementById('main-dashboard').style.display = 'grid';
+  document.getElementById('main-dashboard').style.display = 'flex';
   setTimeout(() => { if(map) map.invalidateSize(); }, 50);
 }
 
