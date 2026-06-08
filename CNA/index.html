@@ -5,176 +5,67 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Catálogo de Recursos | IMIPAS</title>
 
-<!-- Leaflet CSS y JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-<!-- Chart.js y PapaParse -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-<!-- Fuentes -->
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* PALETA DE COLORES INSTITUCIONAL */
   --gob-green: #002f2a;
   --verde-claro: #1e5b4f;
-  
   --primary: #9b2247; 
   --primary-dark: #611232;
-  
   --secondary: #a57f2c; 
   --dorado-claro: #e6d194;
-  
   --azul: #33508d;
-  
   --text: #161a1d;
   --text2: #98989A;
-  
   --bg: #ffffff; 
   --border: rgba(152, 152, 154, 0.4);
 }
 body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh;}
 
-/* HEADER GOB.MX OFICIAL */
-.gobmx-topbar {
-  background-color: var(--gob-green);
-  height: 48px;
-  display: flex;
-  align-items: center;
-  padding: 0 5%;
-}
-.gobmx-topbar img {
-  height: 28px;
-}
+.gobmx-topbar { background-color: var(--gob-green); height: 48px; display: flex; align-items: center; padding: 0 5%; }
+.gobmx-topbar img { height: 28px; }
 
-/* HEADER IMIPAS */
-.imipas-header {
-  background-color: #ffffff;
-  padding: 24px 5%;
-  border-bottom: 4px solid var(--primary);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.imipas-header h1 {
-  font-size: 24px;
-  color: var(--gob-green);
-  font-weight: 700;
-  line-height: 1.2;
-}
-.imipas-header h2 {
-  font-size: 16px;
-  color: var(--text2);
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.version-badge {
-  font-size: 11px;
-  background: var(--gob-green);
-  color: white;
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-family: 'Noto Sans', sans-serif;
-}
+.imipas-header { background-color: #ffffff; padding: 24px 5%; border-bottom: 4px solid var(--primary); display: flex; flex-direction: column; gap: 6px; }
+.imipas-header h1 { font-size: 24px; color: var(--gob-green); font-weight: 700; line-height: 1.2; }
+.imipas-header h2 { font-size: 16px; color: var(--text2); font-weight: 500; display: flex; align-items: center; gap: 12px; }
+.version-badge { font-size: 11px; background: var(--gob-green); color: white; padding: 3px 8px; border-radius: 12px; font-weight: 600; font-family: 'Noto Sans', sans-serif; }
 
-/* LAYOUT DASHBOARD */
-.dashboard-container {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding: 30px 5%;
-  max-width: 1800px;
-  margin: 0 auto;
-}
-
-.filter-section {
-  width: 100%;
-}
-
-.map-chart-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-
-@media (max-width: 1200px) {
-  .map-chart-section { grid-template-columns: 1fr; }
-}
-
-.table-section {
-  width: 100%;
-}
-
+.dashboard-container { display: flex; flex-direction: column; gap: 24px; padding: 30px 5%; max-width: 1800px; margin: 0 auto; }
+.filter-section { width: 100%; }
+.map-chart-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 1200px) { .map-chart-section { grid-template-columns: 1fr; } }
+.table-section { width: 100%; }
 .tab-content{display:none; padding:30px 5% 40px 5%; max-width:1600px; margin:0 auto;}
 .tab-content.active{display:block}
 
-/* LOADER */
 #loader{text-align:center; padding:80px; font-size:16px; color:var(--text2);}
 .spinner {border: 4px solid rgba(0,0,0,.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: var(--primary); animation: spin 1s linear infinite; margin: 0 auto 15px;}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* CONTENEDORES MAPA Y GRÁFICA */
-.map-card {
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 4px rgba(0,0,0,.08);
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-.map-card h3, .chart-wrap h3 {
-  padding: 16px 20px;
-  background: #f8f9fa;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
-  color: var(--gob-green);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.titulo-dinamico-filtro {
-  color: var(--primary);
-  font-weight: 700;
-  text-transform: none;
-}
+.error-box { background: #ffebee; border: 2px solid var(--primary); border-radius: 8px; padding: 20px; text-align: left; max-width: 600px; margin: 0 auto; color: #161a1d; }
+.error-box h3 { color: var(--primary); margin-bottom: 10px; }
 
+.map-card { background: #fff; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; position: relative; display: flex; flex-direction: column; }
+.map-card h3, .chart-wrap h3 { padding: 16px 20px; background: #f8f9fa; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--gob-green); text-transform: uppercase; letter-spacing: 0.5px; }
+.titulo-dinamico-filtro { color: var(--primary); font-weight: 700; text-transform: none; }
 #map{height: 400px; width:100%; z-index: 1; flex-grow: 1;}
+#map-empty-overlay { display: none; position: absolute; top: 50px; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); z-index: 10; justify-content: center; align-items: center; font-family: 'Noto Sans'; color: var(--primary); font-weight: 600; }
 
-#map-empty-overlay {
-  display: none;
-  position: absolute;
-  top: 50px; left: 0; right: 0; bottom: 0;
-  background: rgba(255,255,255,0.85);
-  z-index: 10;
-  justify-content: center;
-  align-items: center;
-  font-family: 'Noto Sans';
-  color: var(--primary);
-  font-weight: 600;
-}
-
-/* BUSCADOR Y TABLA */
 .filter-bar{display:flex;gap:12px;}
 .filter-bar input{padding:16px 20px;border:1px solid var(--border);border-radius:8px;font-size:15px;flex:1; font-family:'Noto Sans'; box-shadow: 0 1px 4px rgba(0,0,0,.05);}
 .filter-bar input:focus{outline:none; border-color:var(--primary);}
-.table-wrap {
-  background:#fff;
-  border-radius:8px;
-  overflow:hidden;
-  box-shadow:0 1px 4px rgba(0,0,0,.08);
-  border: 1px solid var(--border);
-}
+.table-wrap { background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); }
 table{width:100%;border-collapse:collapse;}
 thead{background:var(--gob-green);color:#fff}
 th{padding:14px 16px;text-align:left;font-size:13px;font-weight:600; text-transform:uppercase; letter-spacing: 0.5px;}
@@ -182,23 +73,16 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 .main-row{transition: background 0.2s; cursor: pointer;}
 .main-row:hover{background:#fafafa;}
-.expander {
-  margin-right: 8px;
-  display: inline-block;
-  transition: transform 0.2s ease;
-}
+.expander { margin-right: 8px; display: inline-block; transition: transform 0.2s ease; }
 .details-row{display:none; background:#fafafa;}
 .details-content{padding:16px 20px; border-left:4px solid var(--primary); color:var(--text2); font-size:13px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;}
 
-/* LINKS DE NAVEGACIÓN */
 .link-especie{color:var(--primary); text-decoration:none; font-weight:700; cursor:pointer;}
 .link-especie:hover{text-decoration:underline; color:var(--secondary);}
 .text-static{color:var(--text); font-weight:500;}
 
-/* DISEÑO DE LA FICHA TÉCNICA */
 .btn-back{background:#fff; border:1px solid var(--border); padding:10px 20px; border-radius:6px; cursor:pointer; font-family:'Montserrat'; font-weight:600; color:var(--gob-green); margin-bottom:24px; display:inline-flex; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05);}
 .btn-back:hover{background:#f0f0f0;}
-
 .ficha-header{display:flex; flex-wrap:wrap; gap:30px; margin-bottom:30px; align-items:flex-start;}
 .ficha-img-box{flex:0 0 350px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#fff; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.08);}
 .ficha-img-box img{width:100%; height:auto; object-fit:cover; display:block;}
@@ -214,44 +98,29 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 #map-ficha{height:400px; width:100%; border-radius:0 0 8px 8px; z-index:1;}
 .chart-ficha-container {position: relative; height: 350px; width: 100%;}
-
-/* GRÁFICA GLOBAL CONTENEDOR */
 .chart-wrap{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column;}
 .chart-container-box { padding: 20px; position: relative; min-height: 360px; flex-grow: 1;}
 
-/* FOOTER OFICIAL */
-.gobmx-footer {
-  background-color: var(--gob-green);
-  height: 60px;
-  background-image: url('https://framework-gb.cdn.gob.mx/landing/img/pleca.svg');
-  background-repeat: repeat-x;
-  background-position: bottom;
-  margin-top: 60px;
-}
+.gobmx-footer { background-color: var(--gob-green); height: 60px; background-image: url('https://framework-gb.cdn.gob.mx/landing/img/pleca.svg'); background-repeat: repeat-x; background-position: bottom; margin-top: 60px; }
 </style>
 </head>
 <body>
 
-<!-- Barra Superior de Gobierno -->
 <div class="gobmx-topbar">
   <img src="https://framework-gb.cdn.gob.mx/landing/img/logoheader.svg" alt="Gobierno de México">
 </div>
 
-<!-- Encabezado Institucional -->
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v2.9.1</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v3.2</span></h2>
 </header>
 
-<!-- Pantalla de Carga -->
 <div id="loader">
   <div class="spinner"></div>
   <p>Sincronizando datos de la RNIIPA...</p>
 </div>
 
-<!-- Tablero Principal -->
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
-  
   <div class="filter-section">
     <div class="filter-bar">
       <input type="text" id="search-esp" placeholder="Buscar por recurso, nombre común, especie, zona o entidad..." onkeyup="filtrarDashboardGlobal()">
@@ -288,10 +157,8 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
       </table>
     </div>
   </div>
-
 </div>
 
-<!-- Sección de Ficha Técnica Desplegable -->
 <div id="tab-ficha" class="tab-content">
   <button class="btn-back" onclick="cerrarFicha()">← Regresar al Tablero Principal</button>
   <div id="ficha-container"></div>
@@ -300,10 +167,6 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 <footer class="gobmx-footer"></footer>
 
 <script>
-/**
- * USO DEL ID ORIGINAL: Asegúrate de que el documento en Google Sheets 
- * esté configurado como "Cualquier persona con el enlace puede leer".
- */
 const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
 
 let datosIndice = [];
@@ -316,27 +179,37 @@ let capChart;
 let mapFichaInstance = null; 
 let chartFichaInstance = null;
 
+async function procesarRespuesta(respuesta, nombreHoja) {
+  if (!respuesta || !respuesta.ok) return null;
+  const texto = await respuesta.text();
+  if (texto.trim().startsWith('<')) {
+    throw new Error(`Google Sheets bloqueó la conexión a la pestaña "${nombreHoja}". Verifica que el archivo tenga permisos "Cualquier persona con el enlace".`);
+  }
+  return Papa.parse(texto, { header: true, skipEmptyLines: true }).data;
+}
+
 async function sincronizarGoogleSheets() {
   try {
-    // Usamos el endpoint oficial de visualización que sí acepta "&sheet=Nombre"
     const urlIndice = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=indice`;
     const urlCoordenadas = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=coordenadas`;
     const urlCaptura = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=captura`;
     const urlFicha = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Datos%20de%20ficha`; 
 
-    const [resIndice, resCoord, resCaptura, resFicha] = await Promise.all([
-      fetch(urlIndice), 
-      fetch(urlCoordenadas), 
+    const peticiones = await Promise.all([
+      fetch(urlIndice).catch(() => null), 
+      fetch(urlCoordenadas).catch(() => null), 
       fetch(urlCaptura).catch(() => null),
       fetch(urlFicha).catch(() => null)
     ]);
 
-    // PapaParse convertirá el CSV directo a JSON
-    datosIndice = Papa.parse(await resIndice.text(), { header: true, skipEmptyLines: true }).data;
-    datosCoordenadas = Papa.parse(await resCoord.text(), { header: true, skipEmptyLines: true }).data;
-    
-    if(resCaptura && resCaptura.ok) datosCaptura = Papa.parse(await resCaptura.text(), { header: true, skipEmptyLines: true }).data;
-    if(resFicha && resFicha.ok) datosFicha = Papa.parse(await resFicha.text(), { header: true, skipEmptyLines: true }).data;
+    datosIndice = await procesarRespuesta(peticiones[0], 'indice') || [];
+    datosCoordenadas = await procesarRespuesta(peticiones[1], 'coordenadas') || [];
+    datosCaptura = await procesarRespuesta(peticiones[2], 'captura') || [];
+    datosFicha = await procesarRespuesta(peticiones[3], 'Datos de ficha') || [];
+
+    if(datosIndice.length === 0) {
+      throw new Error("No se encontraron registros válidos en la hoja principal. Revisa la base de datos.");
+    }
 
     document.getElementById('loader').style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'flex';
@@ -346,8 +219,13 @@ async function sincronizarGoogleSheets() {
     actualizarGraficaConsolidada(datosIndice.map(item => item['Común']));
 
   } catch (error) {
-    document.getElementById('loader').innerHTML = `<p style="color:var(--primary)">Error al conectar con la base de datos de la RNIIPA. Verifica que el archivo de Google Sheets tenga permisos de acceso público.</p>`;
-    console.error("Error cargando hojas: ", error);
+    document.getElementById('loader').innerHTML = `
+      <div class="error-box">
+        <h3>Hubo un problema de conexión</h3>
+        <p><strong>Detalle:</strong> ${error.message}</p>
+      </div>
+    `;
+    console.error("Error en sincronización:", error);
   }
 }
 
@@ -471,9 +349,7 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
       const indiceRow = datosIndice.find(i => i['Común'] === comunUPA) || {};
       const speciesMatched = matchesFiltro(indiceRow, input);
 
-      if (input && !matchesFiltro(upa, input) && !speciesMatched) {
-        return;
-      }
+      if (input && !matchesFiltro(upa, input) && !speciesMatched) { return; }
 
       const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
       const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
@@ -508,18 +384,14 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
   }
 }
 
-function generarColorPorPaleta(index, total) {
+function generarColorPorPaleta(index) {
   const hexColors = ['#9b2247', '#1e5b4f', '#a57f2c', '#33508d', '#611232'];
   return hexColors[index % hexColors.length];
 }
 
 function actualizarGraficaConsolidada(comunesValidos, input = '') {
   const container = document.getElementById('global-chart-wrapper');
-  
-  if (capChart) {
-    capChart.destroy();
-    capChart = null;
-  }
+  if (capChart) { capChart.destroy(); capChart = null; }
 
   if (comunesValidos.length === 0) {
     container.innerHTML = `<p style="color:var(--primary); text-align:center; padding-top:60px; font-family:'Noto Sans'; font-weight:600;">Sin registros estadísticos de producción</p>`;
@@ -528,14 +400,11 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
 
   const datosFiltrados = datosCaptura.filter(item => {
     if (!comunesValidos.includes(item['Común'])) return false;
-    
     const comun = item['Común'] || '';
     const indiceRow = datosIndice.find(i => i['Común'] === comun) || {};
     const speciesMatched = matchesFiltro(indiceRow, input);
 
-    if (input && !matchesFiltro(item, input) && !speciesMatched) {
-        return false;
-    }
+    if (input && !matchesFiltro(item, input) && !speciesMatched) { return false; }
     return true;
   });
   
@@ -551,15 +420,27 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
   const totalesPorEntidad = {};
 
   datosFiltrados.forEach(d => {
-    const year = (d['AÑO'] || d['Año'] || d['anio'] || '').toString().trim();
-    let entidad = (d['ENTIDAD'] || d['entidad'] || d['Entidad'] || 'No Especificado').toString().trim();
+    const keys = Object.keys(d);
+    
+    // CORRECCIÓN EXACTA: Buscar "ANO", "AÑO" o "ANIO"
+    const yearKey = keys.find(k => {
+      const ku = k.toUpperCase().trim();
+      return ku === 'AÑO' || ku === 'ANIO' || ku === 'ANO';
+    });
+    
+    const entidadKey = keys.find(k => k.toUpperCase().includes('ENTIDAD'));
+    const pesoKey = keys.find(k => k.toUpperCase().includes('PESO'));
+
+    const year = yearKey ? String(d[yearKey]).trim() : '';
+    let entidad = entidadKey ? String(d[entidadKey]).trim() : 'No Especificado';
+    
     if (!year) return;
 
     añosSet.add(year);
 
-    let rawPeso = d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso'] || '';
-    if (typeof rawPeso === 'string') rawPeso = rawPeso.replace(/[^0-9.]/g, '');
-    const pesoParsed = parseFloat(rawPeso);
+    let rawPeso = pesoKey ? String(d[pesoKey]) : '';
+    let cleanPeso = rawPeso.replace(/,/g, '').replace(/[^0-9.-]/g, '');
+    const pesoParsed = parseFloat(cleanPeso);
 
     if (!isNaN(pesoParsed) && pesoParsed > 0) {
       if (!matrizDatos[year]) matrizDatos[year] = {};
@@ -590,10 +471,10 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
       } else {
         if (matrizDatos[year] && matrizDatos[year][entidad]) suma = matrizDatos[year][entidad];
       }
-      return Math.round(suma / 1000); 
+      return Math.round(suma); 
     });
 
-    const bgColor = entidad === 'Otros' ? '#98989A' : generarColorPorPaleta(idx, top5.length);
+    const bgColor = entidad === 'Otros' ? '#98989A' : generarColorPorPaleta(idx);
 
     return {
       label: entidad,
@@ -607,10 +488,7 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
   const ctx = document.getElementById('cap-chart').getContext('2d');
   capChart = new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels: labelsAnos,
-      datasets: datasetsApilados
-    },
+    data: { labels: labelsAnos, datasets: datasetsApilados },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -620,15 +498,12 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
         y: { 
           stacked: true, 
           position: 'left', 
-          title: { display: true, text: 'Toneladas' } 
+          title: { display: true, text: 'Kilogramos (KG)' } 
         }
       },
       plugins: {
-        legend: {
-          display: true,
-          position: 'bottom',
-          labels: { boxWidth: 12, font: { size: 11, family: 'Noto Sans' }, color: '#161a1d' }
-        }
+        legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11, family: 'Noto Sans' }, color: '#161a1d' } },
+        tooltip: { callbacks: { label: function(context) { return context.dataset.label + ': ' + context.parsed.y.toLocaleString('en-US') + ' KG'; } } }
       }
     }
   });
@@ -646,7 +521,6 @@ function abrirFicha(valorComun) {
   const item = { ...itemIndice, ...(itemFicha || {}) };
 
   const container = document.getElementById('ficha-container');
-  
   const tituloPrincipal = item['Común'] || 'Especie';
   const nombreComun = item['Nombre común'] || 'N/A';
   const nombreCientifico = item['Nombre científico'] || item['Especie'] || '';
@@ -788,8 +662,20 @@ function abrirFicha(valorComun) {
     if (datosFiltradosCap.length > 0) {
         const agregadosPorAno = {};
         datosFiltradosCap.forEach(d => {
-            const year = d['AÑO'] || d['Año'] || d['anio'];
-            const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
+            const keys = Object.keys(d);
+            
+            // CORRECCIÓN EXACTA: Buscar "ANO", "AÑO" o "ANIO"
+            const yearKey = keys.find(k => {
+              const ku = k.toUpperCase().trim();
+              return ku === 'AÑO' || ku === 'ANIO' || ku === 'ANO';
+            });
+            const pesoKey = keys.find(k => k.toUpperCase().includes('PESO'));
+
+            const year = yearKey ? String(d[yearKey]).trim() : '';
+            let rawPeso = pesoKey ? String(d[pesoKey]) : '';
+            let cleanPeso = rawPeso.replace(/,/g, '').replace(/[^0-9.-]/g, '');
+            const peso = parseFloat(cleanPeso) || 0;
+
             if (year) {
                 if (!agregadosPorAno[year]) agregadosPorAno[year] = 0;
                 agregadosPorAno[year] += peso;
@@ -797,7 +683,7 @@ function abrirFicha(valorComun) {
         });
 
         const labels = Object.keys(agregadosPorAno).sort((a, b) => parseInt(a) - parseInt(b));
-        const dataKg = labels.map(year => agregadosPorAno[year]);
+        const dataKg = labels.map(year => Math.round(agregadosPorAno[year]));
 
         const ctxFicha = document.getElementById('ficha-cap-chart').getContext('2d');
         chartFichaInstance = new Chart(ctxFicha, {
@@ -805,13 +691,20 @@ function abrirFicha(valorComun) {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Producción Anual (Kg)',
+                    label: 'Producción Anual (KG)',
                     data: dataKg,
                     backgroundColor: 'rgba(155, 34, 71, 0.15)',
                     borderColor: '#9b2247',
                     borderWidth: 2,
                     fill: true
                 }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                tooltip: { callbacks: { label: function(context) { return context.parsed.y.toLocaleString('en-US') + ' KG'; } } }
+              }
             }
         });
     } else {
@@ -823,11 +716,7 @@ function abrirFicha(valorComun) {
 function cerrarFicha() {
   document.getElementById('tab-ficha').style.display = 'none';
   document.getElementById('main-dashboard').style.display = 'flex';
-  setTimeout(() => { 
-    if(map) {
-      map.invalidateSize(); 
-    }
-  }, 50);
+  setTimeout(() => { if(map) { map.invalidateSize(); } }, 50);
 }
 
 window.onload = sincronizarGoogleSheets;
