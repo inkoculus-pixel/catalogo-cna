@@ -1,60 +1,197 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Catálogo | IMIPAS</title>
-    </head>
-<body>
-    <script>
-const SHEET_CAPTURA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-J0WwCyv07TWzqZi7_J2bDphc1qxMt9i089UhsGITwLWfAHOnW0ecfwkWAqnj1p-cqocrIM0CKC8d/pub?output=csv';
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catálogo de Recursos | IMIPAS</title>
 
-// Función para limpiar nombres de columnas y hacer el código robusto ante cambios en la base
-function normalizeKey(key) {
-    if(!key) return "";
-    return key.toString().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* PALETA DE COLORES INSTITUCIONAL */
+  --gob-green: #002f2a;
+  --verde-claro: #1e5b4f;
+  
+  --primary: #9b2247; 
+  --primary-dark: #611232;
+  
+  --secondary: #a57f2c; 
+  --dorado-claro: #e6d194;
+  
+  --azul: #33508d;
+  
+  --text: #161a1d;
+  --text2: #98989A;
+  
+  --bg: #ffffff; 
+  --border: rgba(152, 152, 154, 0.4);
+}
+body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh;}
+
+/* HEADER GOB.MX OFICIAL */
+.gobmx-topbar {
+  background-color: var(--gob-green);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 5%;
+}
+.gobmx-topbar img {
+  height: 28px;
 }
 
-async function sincronizarGoogleSheets() {
-    try {
-        const resCaptura = await fetch(SHEET_CAPTURA_URL).then(r => r.text());
-        const rawData = Papa.parse(resCaptura, { header: true, skipEmptyLines: true }).data;
-        
-        // Mapeo automático usando la normalización
-        datosCaptura = rawData.map(row => {
-            let cleanRow = {};
-            Object.keys(row).forEach(k => cleanRow[normalizeKey(k)] = row[k]);
-            return cleanRow;
-        });
-
-        console.log("Datos normalizados listos:", datosCaptura[0]);
-        // Continuar con la lógica de renderizado...
-    } catch (e) { console.error("Error en sincronización:", e); }
+/* HEADER IMIPAS */
+.imipas-header {
+  background-color: #ffffff;
+  padding: 24px 5%;
+  border-bottom: 4px solid var(--primary);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.imipas-header h1 {
+  font-size: 24px;
+  color: var(--gob-green);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.imipas-header h2 {
+  font-size: 16px;
+  color: var(--text2);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.version-badge {
+  font-size: 11px;
+  background: var(--gob-green);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-family: 'Noto Sans', sans-serif;
 }
 
-function actualizarGraficaConsolidada(comunesValidos) {
-    if (capChart) capChart.destroy();
-    
-    // Acceso a datos usando claves normalizadas
-    const filtered = datosCaptura.filter(d => comunesValidos.includes(d['COMUN']));
-    
-    const años = [...new Set(filtered.map(d => d['ANO']))].sort();
-    const entidades = [...new Set(filtered.map(d => d['ENTIDAD']))];
-    
-    const ctx = document.getElementById('cap-chart').getContext('2d');
-    capChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: años,
-            datasets: entidades.map((ent, i) => ({
-                label: ent,
-                data: años.map(a => filtered.filter(f => f['ANO'] === a && f['ENTIDAD'] === ent)
-                    .reduce((sum, curr) => sum + parseFloat(curr['PESO VIVO (KG)'] || 0), 0)),
-                backgroundColor: `hsl(${i * 60}, 50%, 50%)`
-            }))
-        },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
+/* LAYOUT DASHBOARD */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 30px 5%;
+  max-width: 1800px;
+  margin: 0 auto;
 }
-</script>
-</body>
-</html>
+
+.filter-section {
+  width: 100%;
+}
+
+.map-chart-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1200px) {
+  .map-chart-section { grid-template-columns: 1fr; }
+}
+
+.table-section {
+  width: 100%;
+}
+
+.tab-content{display:none; padding:30px 5% 40px 5%; max-width:1600px; margin:0 auto;}
+.tab-content.active{display:block}
+
+/* LOADER */
+#loader{text-align:center; padding:80px; font-size:16px; color:var(--text2);}
+.spinner {border: 4px solid rgba(0,0,0,.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: var(--primary); animation: spin 1s linear infinite; margin: 0 auto 15px;}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* CONTENEDORES MAPA Y GRÁFICA */
+.map-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.map-card h3, .chart-wrap h3 {
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--gob-green);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.titulo-dinamico-filtro {
+  color: var(--primary);
+  font-weight: 700;
+  text-transform: none;
+}
+
+#map{height: 400px; width:100%; z-index: 1; flex-grow: 1;}
+
+#map-empty-overlay {
+  display: none;
+  position: absolute;
+  top: 50px; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.85);
+  z-index: 10;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Noto Sans';
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* BUSCADOR Y TABLA */
+.filter-bar{display:flex;gap:12px;}
+.filter-bar input{padding:16px 20px;border:1px solid var(--border);border-radius:8px;font-size:15px;flex:1; font-family:'Noto Sans'; box-shadow: 0 1px 4px rgba(0,0,0,.05);}
+.filter-bar input:focus{outline:none; border-color:var(--primary);}
+.table-wrap {
+  background:#fff;
+  border-radius:8px;
+  overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+  border: 1px solid var(--border);
+}
+table{width:100%;border-collapse:collapse;}
+thead{background:var(--gob-green);color:#fff}
+th{padding:14px 16px;text-align:left;font-size:13px;font-weight:600; text-transform:uppercase; letter-spacing: 0.5px;}
+td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-family:'Noto Sans', sans-serif;}
+
+.main-row{transition: background 0.2s; cursor: pointer;}
+.main-row:hover{background:#fafafa;}
+.expander {
+  margin-right: 8px;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+.details-row{display:none; background:#fafafa;}
+.details-content{padding:16px 20px; border-left:4px solid var(--primary); color:var(--text2); font-size:13px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;}
+
+/* LINKS DE NAVEGACIÓN */
+.link-especie{color:var(--primary); text-decoration:none; font-weight:700; cursor:pointer;}
+.link-especie:hover{text-decoration:underline; color:var(--secondary);}
+.text-static{color:var(--text); font-weight:500;}
+
+/* DISEÑO DE LA FICHA TÉCNICA */
+.btn-back{background:#fff; border:1px solid var(--border); padding:10px 20px; border-radius:6px; cursor:pointer; font-family:'Montserrat'; font-weight:600; color:var(--gob-green); margin-bottom:24px; display:inline-flex; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.btn-back:hover{background:#f0f0f0;}
