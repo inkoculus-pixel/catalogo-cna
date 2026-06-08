@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directorio de Investigadores</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+      :root {
+        --primary-color: #611232;
+        --bg-color: #ffffff;
+      }
+      
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Noto Sans', sans-serif;
+        margin: 0;
+        padding: 5px;
+        background-color: var(--bg-color);
+      }
+      
+      .search-container {
+        margin: 15px 0;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+      }
+      #searchInput {
+        width: 100%;
+        max-width: 800px;
+        padding: 12px 20px;
+        font-size: 16px;
+        border: 2px solid var(--primary-color);
+        border-radius: 25px;
+        outline: none;
+        font-family: 'Noto Sans', sans-serif;
+      }
+      
+      .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+      }
+      
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px; 
+        table-layout: auto; 
+      }
+      th {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 12px;
+        text-align: left;
+      }
+      td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
+        white-space: normal; 
+        overflow-wrap: anywhere; 
+        word-break: break-word;
+      }
+      .main-row {
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+      }
+      .main-row:hover {
+        background-color: #eaeaea; 
+      }
+      .arrow-cell {
+        color: var(--primary-color);
+        font-size: 16px;
+        text-align: center;
+        width: 40px; 
+      }
+      .details-row {
+        display: none;
+        background-color: #fafafa;
+      }
+      .details-content {
+        padding: 15px;
+        border-left: 5px solid var(--primary-color);
+      }
+      .details-content p {
+        margin: 8px 0;
+        line-height: 1.5;
+      }
+      .bold-title {
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+
+      /* REGLAS RESPONSIVAS */
+      @media screen and (max-width: 800px) {
+        table {
+          font-size: 12px;
+        }
+        th, td {
+          padding: 8px 5px;
+        }
+        .arrow-cell {
+          width: 30px;
+          font-size: 14px;
+        }
+      }
+
+      @media screen and (max-width: 500px) {
+        table {
+          font-size: 9.5px; 
+        }
+        th, td {
+          padding: 5px 2px;
+        }
+        .arrow-cell {
+          width: 20px;
+          font-size: 10px;
+        }
+        #searchInput {
+          font-size: 14px;
+          padding: 10px 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Buscar por nombre, institución, especie, estado..." onkeyup="filterData()">
+    </div>
+
+    <div id="loading" style="text-align:center; padding: 20px; color: #611232; font-weight: bold;">
+      Cargando base de datos...
+    </div>
+    
+    <div class="table-wrapper">
+      <table id="directoryTable" style="display:none;">
+        <thead>
+          <tr>
+            <th></th> 
+            <th>Estado</th>
+            <th>Nombre Completo</th>
+            <th>Institución</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      let directoryData = [];
+
+      // Reemplazamos /pubhtml por /pub?output=csv para obtener los datos crudos
+      const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0HhYp1ZU9AgUDZF0RjeyW3FoP2Zbbft_R-uM8wHwcVmtT1zrxoSFNImO_IgIgLH0farhxovIWSFYHC8/pub?output=csv';
+
+      // Función de inicio: descargar y procesar los datos
+      function fetchDirectoryData() {
+        Papa.parse(csvUrl, {
+          download: true,
+          header: true, // Usa la primera fila como nombres de variables
+          skipEmptyLines: true,
+          complete: function(results) {
+            let data = results.data;
+            
+            // Ordenar alfabéticamente por la columna "Estado donde radica"
+            data.sort(function(a, b) {
+              var estadoA = (a['Estado donde radica'] || "").toString().toLowerCase();
+              var estadoB = (b['Estado donde radica'] || "").toString().toLowerCase();
+              
+              if (estadoA < estadoB) { return -1; }
+              if (estadoA > estadoB) { return 1; }
+              return 0;
+            });
+
+            populateTable(data);
+          },
+          error: function(error) {
+            console.error('Error al descargar los datos:', error);
+            document.getElementById('loading').innerText = 'Error al cargar la base de datos. Verifica la liga pública.';
+          }
+        });
+      }
+
+      function populateTable(data) {
+        directoryData = data;
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('directoryTable').style.display = 'table';
+        renderRows(data);
+      }
+
+      function renderRows(data) {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        data.forEach((row, index) => {
+          const correo = row['Correo electrónico'] || row['Correo'] || row['Dirección de correo electrónico'] || '';
+          const institucion = row['Institución a la que pertenece'] || row['Nombre de la Institución'] || row['Institución'] || '';
+          
+          const nombre = row['Nombre'] || '';
+          const apellidos = row['Apellidos'] || '';
+          const nombreCompleto = `${nombre} ${apellidos}`.trim();
+
+          const tr = document.createElement('tr');
+          tr.className = 'main-row';
+          tr.onclick = () => toggleDetails(index);
+          
+          tr.innerHTML = `
+            <td class="arrow-cell" id="arrow-${index}">▶</td>
+            <td>${row['Estado donde radica'] || ''}</td>
+            <td><strong>${nombreCompleto}</strong></td>
+            <td>${institucion}</td>
+            <td>${correo}</td>
+            <td>${row['Teléfono institucional'] || ''}</td>
+          `;
+          tbody.appendChild(tr);
+
+          const detailsTr = document.createElement('tr');
+          detailsTr.className = 'details-row';
+          detailsTr.id = `details-${index}`;
+          
+          detailsTr.innerHTML = `
+            <td colspan="6">
+              <div class="details-content">
+                <p><span class="bold-title">Especie o grupo de especies con las que se ha trabajado:</span> ${row['Especie o grupo de especies con las que se ha trabajado'] || ''}</p>
+                <p><span class="bold-title">Último grado académico:</span> ${row['Último grado académico'] || ''}</p>
+                <p><span class="bold-title">Años de experiencia en investigación en pesca y/o acuacultura:</span> ${row['Años de experiencia en investigación en pesca y/o acuacultura'] || ''}</p>
+                <p><span class="bold-title">Semblanza del investigador:</span> ${row['Semblanza del investigador'] || ''}</p>
+                <p><span class="bold-title">Cuenta con experiencia en:</span> ${row['Cuenta con experiencia en:'] || ''}</p>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(detailsTr);
+        });
+      }
+
+      function toggleDetails(index) {
+        const detailsRow = document.getElementById(`details-${index}`);
+        const arrow = document.getElementById(`arrow-${index}`);
+        
+        if (detailsRow.style.display === 'table-row') {
+          detailsRow.style.display = 'none';
+          arrow.innerHTML = '▶'; 
+        } else {
+          detailsRow.style.display = 'table-row';
+          arrow.innerHTML = '▼'; 
+        }
+      }
+
+      function filterData() {
+        const searchInput = document.getElementById('searchInput').value.toLowerCase();
+        
+        const filteredData = directoryData.filter(row => {
+          const rowValues = Object.values(row).join(' ').toLowerCase();
+          return rowValues.includes(searchInput);
+        });
+
+        renderRows(filteredData);
+      }
+
+      // Iniciar la descarga de datos cuando la página cargue
+      window.onload = fetchDirectoryData;
+    </script>
+  </body>
+</html>
