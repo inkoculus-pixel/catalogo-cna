@@ -112,7 +112,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v3.2</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v3.3</span></h2>
 </header>
 
 <div id="loader">
@@ -346,10 +346,28 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
       const comunUPA = upa['Común'] || '';
       if (!comunesValidos.includes(comunUPA)) return;
 
-      const indiceRow = datosIndice.find(i => i['Común'] === comunUPA) || {};
-      const speciesMatched = matchesFiltro(indiceRow, input);
+      // FILTRADO GEOGRÁFICO DE ALTA PRECISIÓN PARA EL MAPA
+      if (input) {
+        // Obtenemos los textos de la fila de coordenadas
+        const rowValues = Object.values(upa).filter(Boolean).join(' ').toLowerCase();
+        
+        // Obtenemos los textos puramente biológicos del índice para esta especie
+        const indiceRow = datosIndice.find(i => i['Común'] === comunUPA) || {};
+        const bioValues = [
+          indiceRow['Recurso'], 
+          indiceRow['Nombre común'], 
+          indiceRow['Especie'], 
+          indiceRow['Nombre científico'], 
+          indiceRow['Litoral'], 
+          indiceRow['Grupo']
+        ].filter(Boolean).join(' ').toLowerCase();
 
-      if (input && !matchesFiltro(upa, input) && !speciesMatched) { return; }
+        // Si el usuario buscó un estado (ej. "Baja") y la UPA no está ahí, 
+        // y la palabra tampoco es un término biológico (ej. "Peces"), la saltamos.
+        if (!rowValues.includes(input) && !bioValues.includes(input)) { 
+            return; 
+        }
+      }
 
       const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
       const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
@@ -400,11 +418,25 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
 
   const datosFiltrados = datosCaptura.filter(item => {
     if (!comunesValidos.includes(item['Común'])) return false;
-    const comun = item['Común'] || '';
-    const indiceRow = datosIndice.find(i => i['Común'] === comun) || {};
-    const speciesMatched = matchesFiltro(indiceRow, input);
+    
+    // FILTRADO GEOGRÁFICO DE ALTA PRECISIÓN PARA LA GRÁFICA
+    if (input) {
+      const rowValues = Object.values(item).filter(Boolean).join(' ').toLowerCase();
+      const indiceRow = datosIndice.find(i => i['Común'] === item['Común']) || {};
+      const bioValues = [
+          indiceRow['Recurso'], 
+          indiceRow['Nombre común'], 
+          indiceRow['Especie'], 
+          indiceRow['Nombre científico'], 
+          indiceRow['Litoral'], 
+          indiceRow['Grupo']
+      ].filter(Boolean).join(' ').toLowerCase();
 
-    if (input && !matchesFiltro(item, input) && !speciesMatched) { return false; }
+      // Similar al mapa, filtramos datos de captura que no coincidan con la región
+      if (!rowValues.includes(input) && !bioValues.includes(input)) { 
+          return false; 
+      }
+    }
     return true;
   });
   
@@ -422,7 +454,6 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
   datosFiltrados.forEach(d => {
     const keys = Object.keys(d);
     
-    // CORRECCIÓN EXACTA: Buscar "ANO", "AÑO" o "ANIO"
     const yearKey = keys.find(k => {
       const ku = k.toUpperCase().trim();
       return ku === 'AÑO' || ku === 'ANIO' || ku === 'ANO';
@@ -664,7 +695,6 @@ function abrirFicha(valorComun) {
         datosFiltradosCap.forEach(d => {
             const keys = Object.keys(d);
             
-            // CORRECCIÓN EXACTA: Buscar "ANO", "AÑO" o "ANIO"
             const yearKey = keys.find(k => {
               const ku = k.toUpperCase().trim();
               return ku === 'AÑO' || ku === 'ANIO' || ku === 'ANO';
