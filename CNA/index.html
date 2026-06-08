@@ -1,86 +1,60 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Catálogo de Recursos | IMIPAS</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
-<style>
-/* ... (Se mantiene el CSS previo de v2.9 por brevedad) ... */
-</style>
-</head>
+    <meta charset="UTF-8">
+    <title>Catálogo | IMIPAS</title>
+    </head>
 <body>
-
-<script>
-const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
-// CORRECCIÓN: URL directa a formato CSV de la base de Producción
+    <script>
 const SHEET_CAPTURA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-J0WwCyv07TWzqZi7_J2bDphc1qxMt9i089UhsGITwLWfAHOnW0ecfwkWAqnj1p-cqocrIM0CKC8d/pub?output=csv';
 
-let datosIndice = [], datosCoordenadas = [], datosCaptura = []; 
+// Función para limpiar nombres de columnas y hacer el código robusto ante cambios en la base
+function normalizeKey(key) {
+    if(!key) return "";
+    return key.toString().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+}
 
 async function sincronizarGoogleSheets() {
-  try {
-    // Usamos el parámetro tqx=out:csv para asegurar formato de datos
-    const [resIndice, resCoord, resCaptura] = await Promise.all([
-      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=indice`).then(r => r.text()),
-      fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=coordenadas`).then(r => r.text()),
-      fetch(SHEET_CAPTURA_URL).then(r => r.text())
-    ]);
+    try {
+        const resCaptura = await fetch(SHEET_CAPTURA_URL).then(r => r.text());
+        const rawData = Papa.parse(resCaptura, { header: true, skipEmptyLines: true }).data;
+        
+        // Mapeo automático usando la normalización
+        datosCaptura = rawData.map(row => {
+            let cleanRow = {};
+            Object.keys(row).forEach(k => cleanRow[normalizeKey(k)] = row[k]);
+            return cleanRow;
+        });
 
-    datosIndice = Papa.parse(resIndice, { header: true, skipEmptyLines: true }).data;
-    datosCoordenadas = Papa.parse(resCoord, { header: true, skipEmptyLines: true }).data;
-    datosCaptura = Papa.parse(resCaptura, { header: true, skipEmptyLines: true }).data;
+        console.log("Datos normalizados listos:", datosCaptura[0]);
+        // Continuar con la lógica de renderizado...
+    } catch (e) { console.error("Error en sincronización:", e); }
+}
 
-    console.log("Datos cargados:", {datosIndice, datosCaptura});
-
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('main-dashboard').style.display = 'flex';
+function actualizarGraficaConsolidada(comunesValidos) {
+    if (capChart) capChart.destroy();
     
-    renderTabla(datosIndice);
-    initMap();
-    actualizarGraficaConsolidada(datosIndice.map(item => item['Común']));
-  } catch (e) { 
-    console.error("Error al sincronizar:", e);
-    document.getElementById('loader').innerText = "Error cargando datos. Verifica la conexión.";
-  }
+    // Acceso a datos usando claves normalizadas
+    const filtered = datosCaptura.filter(d => comunesValidos.includes(d['COMUN']));
+    
+    const años = [...new Set(filtered.map(d => d['ANO']))].sort();
+    const entidades = [...new Set(filtered.map(d => d['ENTIDAD']))];
+    
+    const ctx = document.getElementById('cap-chart').getContext('2d');
+    capChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: años,
+            datasets: entidades.map((ent, i) => ({
+                label: ent,
+                data: años.map(a => filtered.filter(f => f['ANO'] === a && f['ENTIDAD'] === ent)
+                    .reduce((sum, curr) => sum + parseFloat(curr['PESO VIVO (KG)'] || 0), 0)),
+                backgroundColor: `hsl(${i * 60}, 50%, 50%)`
+            }))
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
 }
-
-function actualizarGraficaConsolidada(comunesValidos, input) {
-  if (capChart) capChart.destroy();
-  
-  // Validamos que datosCaptura no esté vacío
-  if (!datosCaptura || datosCaptura.length === 0) return;
-
-  const filtered = datosCaptura.filter(d => comunesValidos.includes(d['Común']));
-  
-  // Usamos los encabezados exactos: 'ANO' y 'PESO VIVO (KG)'
-  const años = [...new Set(filtered.map(d => d['ANO']))].sort();
-  const entidades = [...new Set(filtered.map(d => d['ENTIDAD']))];
-  
-  const ctx = document.getElementById('cap-chart').getContext('2d');
-  capChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: años,
-      datasets: entidades.map((ent, i) => ({
-        label: ent,
-        data: años.map(a => filtered.filter(f => f['ANO'] === a && f['ENTIDAD'] === ent).reduce((sum, curr) => sum + parseFloat(curr['PESO VIVO (KG)'] || 0), 0)),
-        backgroundColor: `hsl(${i * 60}, 50%, 50%)`
-      }))
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-  });
-}
-
-window.onload = sincronizarGoogleSheets;
 </script>
 </body>
 </html>
