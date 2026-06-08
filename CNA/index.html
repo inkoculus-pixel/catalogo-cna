@@ -62,8 +62,10 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
 #map{height: 400px; width:100%; z-index: 1; flex-grow: 1;}
 #map-empty-overlay { display: none; position: absolute; top: 50px; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); z-index: 10; justify-content: center; align-items: center; font-family: 'Noto Sans'; color: var(--primary); font-weight: 600; }
 
+/* NUEVA CLASE PARA CRÉDITOS INSTITUCIONALES */
+.creditos-fuente { font-size: 11px; color: var(--text2); text-align: right; padding: 8px 20px; background: #f8f9fa; border-top: 1px solid var(--border); font-style: italic; font-family: 'Noto Sans', sans-serif; }
+
 .filter-bar{display:flex;gap:12px;}
-/* El input ahora ocupa todo el ancho y se lee más limpio */
 .filter-bar input{padding:16px 20px;border:1px solid var(--border);border-radius:8px;font-size:15px;flex:1; font-family:'Noto Sans'; box-shadow: 0 1px 4px rgba(0,0,0,.05);}
 .filter-bar input:focus{outline:none; border-color:var(--primary);}
 .table-wrap { background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); }
@@ -97,7 +99,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 .data-item strong{display:block; font-size:12px; text-transform:uppercase; color:var(--text2); font-family:'Montserrat', sans-serif;}
 .data-item span{display:block; color:var(--text); margin-top:2px;}
 
-#map-ficha{height:400px; width:100%; border-radius:0 0 8px 8px; z-index:1;}
+#map-ficha{height:400px; width:100%; z-index:1;}
 .chart-ficha-container {position: relative; height: 350px; width: 100%;}
 .chart-wrap{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column;}
 .chart-container-box { padding: 20px; position: relative; min-height: 360px; flex-grow: 1;}
@@ -113,7 +115,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v3.5</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v3.6</span></h2>
 </header>
 
 <div id="loader">
@@ -133,6 +135,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
       <h3 id="map-title">Distribución Geográfica de UPAs <span class="titulo-dinamico-filtro">(Global)</span></h3>
       <div id="map-empty-overlay">Sin registros de coordenadas asociadas</div>
       <div id="map"></div>
+      <div class="creditos-fuente">Fuente: datos de SENASICA (2025)</div>
     </div>
     
     <div class="chart-wrap">
@@ -140,6 +143,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
       <div class="chart-container-box" id="global-chart-wrapper">
         <canvas id="cap-chart"></canvas>
       </div>
+      <div class="creditos-fuente">Fuente: Anuarios estadísticos CONAPESCA (2025)</div>
     </div>
   </div>
 
@@ -303,7 +307,6 @@ function filtrarDashboardGlobal() {
   const mapTitleText = document.querySelector("#map-title .titulo-dinamico-filtro");
   const chartTitleText = document.querySelector("#chart-title .titulo-dinamico-filtro");
   
-  // BLOQUE DE REINICIO ROBUSTO: Garantiza que la interfaz siempre vuelva al modo inicial si la barra está vacía
   if (input === "") {
       mapTitleText.innerText = `(Global)`;
       chartTitleText.innerText = `(Global)`;
@@ -356,7 +359,6 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
       const comunUPA = upa['Común'] || '';
       if (!comunesValidos.includes(comunUPA)) return;
 
-      // FILTRADO GEOGRÁFICO DIRECTO PARA EL MAPA
       if (input) {
         const upaMatched = matchesFiltro(upa, input);
         const indiceRow = datosIndice.find(i => i['Común'] === comunUPA) || {};
@@ -417,7 +419,6 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
   const datosFiltrados = datosCaptura.filter(item => {
     if (!comunesValidos.includes(item['Común'])) return false;
     
-    // FILTRADO GEOGRÁFICO DIRECTO PARA LA GRÁFICA
     if (input) {
       const capMatched = matchesFiltro(item, input);
       const indiceRow = datosIndice.find(i => i['Común'] === item['Común']) || {};
@@ -525,7 +526,7 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
         legend: { 
           display: true, 
           position: 'bottom', 
-          onClick: null, // Evita que se recorten los datos con clics accidentales
+          onClick: null,
           labels: { boxWidth: 12, font: { size: 11, family: 'Noto Sans' }, color: '#161a1d' } 
         },
         tooltip: { callbacks: { label: function(context) { return context.dataset.label + ': ' + context.parsed.y.toLocaleString('en-US') + ' KG'; } } }
@@ -576,9 +577,10 @@ function abrirFicha(valorComun) {
     </div>
 
     <div class="ficha-grid">
-      <div class="ficha-card" style="grid-column: 1 / -1; padding:0; overflow:hidden;">
+      <div class="ficha-card" style="grid-column: 1 / -1; padding:0; overflow:hidden; display: flex; flex-direction: column;">
         <h4 style="padding: 24px 24px 0 24px; border-bottom: none;">Distribución de UPAs para ${tituloPrincipal}</h4>
-        <div id="map-ficha"></div>
+        <div id="map-ficha" style="flex-grow: 1; min-height: 400px;"></div>
+        <div class="creditos-fuente">Fuente: datos de SENASICA (2025)</div>
       </div>
 
       <div class="ficha-card">
@@ -643,11 +645,12 @@ function abrirFicha(valorComun) {
         </div>
       </div>
 
-      <div class="ficha-card" style="grid-column: 1 / -1;">
-        <h4>Datos Estadísticos de Producción Histórica</h4>
-        <div id="chart-ficha-wrapper" class="chart-ficha-container">
+      <div class="ficha-card" style="grid-column: 1 / -1; padding:0; overflow:hidden; display: flex; flex-direction: column;">
+        <h4 style="padding: 24px 24px 10px 24px; margin-bottom: 0; border-bottom: none;">Datos Estadísticos de Producción Histórica</h4>
+        <div id="chart-ficha-wrapper" class="chart-ficha-container" style="padding: 0 24px 24px 24px; flex-grow: 1;">
            <canvas id="ficha-cap-chart"></canvas>
         </div>
+        <div class="creditos-fuente">Fuente: Anuarios estadísticos CONAPESCA (2025)</div>
       </div>
     </div>
   `;
@@ -727,7 +730,7 @@ function abrirFicha(valorComun) {
               responsive: true,
               maintainAspectRatio: false,
               plugins: {
-                legend: { onClick: null }, // Mismo bloqueo de clics para la leyenda técnica
+                legend: { onClick: null },
                 tooltip: { callbacks: { label: function(context) { return context.parsed.y.toLocaleString('en-US') + ' KG'; } } }
               }
             }
