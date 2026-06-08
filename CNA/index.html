@@ -12,24 +12,18 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* NUEVA PALETA DE COLORES OFICIAL */
   --gob-green: #002f2a;
-  --verde-claro: #1e5b4f;
   
-  --primary: #9b2247; 
-  --primary-dark: #611232;
-  
-  --secondary: #a57f2c; 
-  --dorado-claro: #e6d194;
-  
-  --azul: #33508d;
+  /* Paleta Oficial */
+  --primary: #611232; 
+  --primary-blue: #33508d;
   
   --text: #161a1d;
   --text2: #98989A;
@@ -37,7 +31,7 @@
   --bg: #ffffff; 
   --border: rgba(152, 152, 154, 0.4);
 }
-body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh;}
+body{font-family:'Noto Sans', Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh;}
 
 /* HEADER GOB.MX OFICIAL */
 .gobmx-topbar {
@@ -53,7 +47,7 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
 
 /* HEADER IMIPAS */
 .imipas-header {
-  background-color: #ffffff;
+  background-color: var(--bg);
   padding: 24px 5%;
   border-bottom: 4px solid var(--primary);
   display: flex;
@@ -76,12 +70,11 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
 }
 .version-badge {
   font-size: 11px;
-  background: var(--gob-green);
+  background: var(--primary-blue);
   color: white;
   padding: 3px 8px;
   border-radius: 12px;
   font-weight: 600;
-  font-family: 'Noto Sans', sans-serif;
 }
 
 /* LAYOUT REESTRUCTURADO */
@@ -92,6 +85,7 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
   padding: 30px 5%;
   max-width: 1800px;
   margin: 0 auto;
+  background: var(--bg);
 }
 
 .filter-section {
@@ -112,7 +106,7 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
   width: 100%;
 }
 
-.tab-content{display:none; padding:30px 5% 40px 5%; max-width:1600px; margin:0 auto;}
+.tab-content{display:none; padding:30px 5% 40px 5%; max-width:1600px; margin:0 auto; background: var(--bg);}
 .tab-content.active{display:block}
 
 #loader{text-align:center; padding:80px; font-size:16px; color:var(--text2);}
@@ -121,7 +115,7 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
 
 /* MAPA PRINCIPAL */
 .map-card {
-  background: #fff;
+  background: var(--bg);
   border-radius: 8px;
   border: 1px solid var(--border);
   box-shadow: 0 1px 4px rgba(0,0,0,.08);
@@ -155,17 +149,16 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
   z-index: 10;
   justify-content: center;
   align-items: center;
-  font-family: 'Noto Sans';
   color: var(--primary);
   font-weight: 600;
 }
 
 /* TABLA EXPANDIBLE */
 .filter-bar{display:flex;gap:12px;}
-.filter-bar input{padding:16px 20px;border:1px solid var(--border);border-radius:8px;font-size:15px;flex:1; font-family:'Noto Sans'; box-shadow: 0 1px 4px rgba(0,0,0,.05);}
-.filter-bar input:focus{outline:none; border-color:var(--primary);}
+.filter-bar input{padding:16px 20px;border:1px solid var(--border);border-radius:8px;font-size:15px;flex:1; font-family:'Noto Sans', sans-serif; box-shadow: 0 1px 4px rgba(0,0,0,.05);}
+.filter-bar input:focus{outline:none; border-color:var(--primary-blue);}
 .table-wrap {
-  background:#fff;
+  background: var(--bg);
   border-radius:8px;
   overflow:hidden;
   box-shadow:0 1px 4px rgba(0,0,0,.08);
@@ -174,7 +167,7 @@ body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--
 table{width:100%;border-collapse:collapse;}
 thead{background:var(--gob-green);color:#fff}
 th{padding:14px 16px;text-align:left;font-size:13px;font-weight:600; text-transform:uppercase; letter-spacing: 0.5px;}
-td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-family:'Noto Sans', sans-serif;}
+td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border);}
 
 .main-row{transition: background 0.2s; cursor: pointer;}
 .main-row:hover{background:#fafafa;}
@@ -186,35 +179,35 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
   transition: transform 0.2s ease;
 }
 .details-row{display:none; background:#fafafa;}
-.details-content{padding:16px 20px; border-left:4px solid var(--primary); color:var(--text2); font-size:13px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;}
+.details-content{padding:16px 20px; border-left:4px solid var(--primary-blue); color:var(--text2); font-size:13px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;}
 
 /* ENLACE DE TABLA */
-.link-especie{color:var(--primary); text-decoration:none; font-weight:700; cursor:pointer;}
-.link-especie:hover{text-decoration:underline; color:var(--secondary);}
+.link-especie{color:var(--primary-blue); text-decoration:none; font-weight:700; cursor:pointer;}
+.link-especie:hover{text-decoration:underline; color:var(--primary);}
 .text-static{color:var(--text); font-weight:500;}
 
 /* FICHA TÉCNICA */
-.btn-back{background:#fff; border:1px solid var(--border); padding:10px 20px; border-radius:6px; cursor:pointer; font-family:'Montserrat'; font-weight:600; color:var(--gob-green); margin-bottom:24px; display:inline-flex; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.btn-back{background:var(--bg); border:1px solid var(--border); padding:10px 20px; border-radius:6px; cursor:pointer; font-family:'Noto Sans', sans-serif; font-weight:600; color:var(--gob-green); margin-bottom:24px; display:inline-flex; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05);}
 .btn-back:hover{background:#f0f0f0;}
 
 .ficha-header{display:flex; flex-wrap:wrap; gap:30px; margin-bottom:30px; align-items:flex-start;}
-.ficha-img-box{flex:0 0 350px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#fff; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.ficha-img-box{flex:0 0 350px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:var(--bg); text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.08);}
 .ficha-img-box img{width:100%; height:auto; object-fit:cover; display:block;}
 .ficha-title-box{flex:1; min-width:300px;}
 .ficha-title-box h1{font-size:36px; color:var(--gob-green); margin-bottom:8px; text-transform:uppercase; letter-spacing:-0.5px; font-weight:700;}
 
 .ficha-grid{display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:24px;}
-.ficha-card{background:#fff; border:1px solid var(--border); border-radius:8px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.ficha-card{background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,.05);}
 .ficha-card h4{color:var(--primary); border-bottom:2px solid #f0f0f0; padding-bottom:10px; margin-bottom:16px; font-size:16px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;}
-.data-item{margin-bottom:12px; font-size:14px; line-height:1.6; text-align:justify; font-family:'Noto Sans', sans-serif;}
-.data-item strong{display:block; font-size:12px; text-transform:uppercase; color:var(--text2); font-family:'Montserrat', sans-serif;}
+.data-item{margin-bottom:12px; font-size:14px; line-height:1.6; text-align:justify;}
+.data-item strong{display:block; font-size:12px; text-transform:uppercase; color:var(--text2);}
 .data-item span{display:block; color:var(--text); margin-top:2px;}
 
 #map-ficha{height:400px; width:100%; border-radius:0 0 8px 8px; z-index:1;}
 .chart-ficha-container{position: relative; height: 350px; width: 100%;}
 
 /* GRÁFICA GLOBAL */
-.chart-wrap{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column;}
+.chart-wrap{background:var(--bg);border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column;}
 .chart-container-box { padding: 20px; position: relative; min-height: 360px; flex-grow: 1;}
 
 /* FOOTER GOB.MX OFICIAL */
@@ -236,12 +229,12 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v2.8</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v3.1</span></h2>
 </header>
 
 <div id="loader">
   <div class="spinner"></div>
-  <p>Sincronizando datos de la RNIIPA...</p>
+  <p>Conectando a la base de datos de la RNIIPA...</p>
 </div>
 
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
@@ -260,9 +253,11 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
     </div>
     
     <div class="chart-wrap">
-      <h3 id="chart-title">Histórico de Producción por Entidad <span class="titulo-dinamico-filtro">(Global)</span></h3>
-      <div class="chart-container-box" id="global-chart-wrapper">
-        <canvas id="cap-chart"></canvas>
+      <h3 id="chart-title">Aviso Estadístico <span class="titulo-dinamico-filtro"></span></h3>
+      <div class="chart-container-box" id="global-chart-wrapper" style="display:flex; justify-content:center; align-items:center;">
+        <p style="color:var(--text2); text-align:center; font-size: 15px; padding: 20px;">
+          Seleccione una especie en la tabla inferior para visualizar su historial de producción detallado.
+        </p>
       </div>
     </div>
   </div>
@@ -297,60 +292,47 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 /**
  * HISTORIAL DE CAMBIOS (RNIIPA)
  * -------------------------------------------------------------------------
- * v2.8 - 2026-06-05:
- * - Solución de reinicio al global en gráficas y mapas cuando se limpia el buscador.
- * - Adición de indicador de colapso/expansión (▼) en la tabla principal.
- * v2.7 - 2026-06-05:
- * - Layout unificado: Buscador superior, 2 columnas (mapa/gráfica), tabla inferior.
- * - Títulos dinámicos de filtrado para mapa y gráfica.
- * - Cambio de nomenclatura de "Captura" a "Producción".
- * v2.6 - 2026-06-05:
- * - Aplicación estricta de la nueva paleta de colores institucionales.
- * - Eliminación del texto del footer conservando la decoración gráfica.
+ * v3.1 - 2026-06-08:
+ * - Migración completa a arquitectura serverless con Supabase (PostgreSQL).
+ * - Optimización de carga dinámica de registros estadísticos e información de fichas.
+ * - Implementación estricta de tipografía Noto Sans y limpieza de fondos a blanco sólido (#ffffff).
+ * - Ajuste de la paleta institucional (#611232) y uso de azul (#33508d) en elementos interactivos.
+ * - Preparación de la estructura HTML para su despliegue en acuatinta.info.
  */
 
-const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
+const supabaseUrl = 'https://fhhocpfjwyhowrhrrqmh.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let datosIndice = [];
 let datosCoordenadas = [];
-let datosCaptura = [];
-let datosFicha = []; 
 let map;
 let markerCluster;
 let capChart;
 let mapFichaInstance = null; 
 let chartFichaInstance = null;
 
-async function sincronizarGoogleSheets() {
+async function sincronizarBaseDatos() {
   try {
-    const urlIndice = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=indice`;
-    const urlCoordenadas = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=coordenadas`;
-    const urlCaptura = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=captura`;
-    const urlFicha = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Datos%20de%20ficha`; 
+    document.getElementById('loader').style.display = 'block';
 
-    const [resIndice, resCoord, resCaptura, resFicha] = await Promise.all([
-      fetch(urlIndice), 
-      fetch(urlCoordenadas), 
-      fetch(urlCaptura).catch(() => null),
-      fetch(urlFicha).catch(() => null)
-    ]);
+    const { data: resIndice, error: errIndice } = await supabase.from('indice').select('*');
+    if (errIndice) throw errIndice;
+    datosIndice = resIndice || [];
 
-    datosIndice = Papa.parse(await resIndice.text(), { header: true, skipEmptyLines: true }).data;
-    datosCoordenadas = Papa.parse(await resCoord.text(), { header: true, skipEmptyLines: true }).data;
-    
-    if(resCaptura && resCaptura.ok) datosCaptura = Papa.parse(await resCaptura.text(), { header: true, skipEmptyLines: true }).data;
-    if(resFicha && resFicha.ok) datosFicha = Papa.parse(await resFicha.text(), { header: true, skipEmptyLines: true }).data;
+    const { data: resCoord, error: errCoord } = await supabase.from('coordenadas').select('*');
+    if (errCoord) throw errCoord;
+    datosCoordenadas = resCoord || [];
 
     document.getElementById('loader').style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'flex';
     
     renderTabla(datosIndice);
     initMap();
-    actualizarGraficaConsolidada(datosIndice.map(item => item['Común']));
 
   } catch (error) {
-    document.getElementById('loader').innerHTML = `<p style="color:var(--primary)">Error al conectar con la base de datos de la RNIIPA.</p>`;
-    console.error(error);
+    document.getElementById('loader').innerHTML = `<p style="color:var(--primary); font-weight:600;">Error al conectar con la base de datos de la RNIIPA.</p>`;
+    console.error("Detalle del error:", error);
   }
 }
 
@@ -364,8 +346,8 @@ function renderTabla(datos) {
   }
 
   datos.forEach((item) => {
-    const valorComun = (item['Común'] || '').toString().trim();
-    const displayNombre = item['Nombre común'] || valorComun || 'Sin nombre';
+    const valorComun = (item['Común'] || item['común'] || item['comun'] || '').toString().trim();
+    const displayNombre = item['Nombre común'] || item['nombre común'] || valorComun || 'Sin nombre';
     
     const tr = document.createElement('tr');
     tr.className = 'main-row';
@@ -374,7 +356,7 @@ function renderTabla(datos) {
       if(e.target.tagName.toLowerCase() === 'a') return; 
       const isHidden = trDetails.style.display === 'none' || trDetails.style.display === '';
       trDetails.style.display = isHidden ? 'table-row' : 'none';
-      tr.style.background = isHidden ? 'rgba(155, 34, 71, 0.05)' : '';
+      tr.style.background = isHidden ? 'rgba(97, 18, 50, 0.05)' : '';
       
       const expander = tr.querySelector('.expander');
       if (expander) {
@@ -389,11 +371,19 @@ function renderTabla(datos) {
       nombreCeldaHTML = `<span class="text-static">${displayNombre}</span>`;
     }
 
+    const recurso = item['Recurso'] || item['recurso'] || '';
+    const especie = item['Especie'] || item['especie'] || item['Nombre científico'] || item['nombre científico'] || '';
+    const litoral = item['Litoral'] || item['litoral'] || '';
+    const zona = item['Zona'] || item['zona'] || 'N/A';
+    const anio = item['Año'] || item['año'] || item['anio'] || 'N/A';
+    const estatus = item['Estatus vigente'] || item['estatus vigente'] || item['Estatus'] || item['estatus'] || 'N/A';
+    const carta = item['Carta Nacional'] || item['carta nacional'] || 'N/A';
+
     tr.innerHTML = `
-      <td><span class="expander">▼</span> ${item['Recurso'] || ''}</td>
+      <td><span class="expander">▼</span> ${recurso}</td>
       <td>${nombreCeldaHTML}</td>
-      <td><em>${item['Especie'] || item['Nombre científico'] || ''}</em></td>
-      <td>${item['Litoral'] || ''}</td>
+      <td><em>${especie}</em></td>
+      <td>${litoral}</td>
     `;
     
     const trDetails = document.createElement('tr');
@@ -401,10 +391,10 @@ function renderTabla(datos) {
     trDetails.innerHTML = `
       <td colspan="4" style="padding: 0;">
         <div class="details-content">
-          <div><p><strong>Zona:</strong></p><p>${item['Zona'] || 'N/A'}</p></div>
-          <div><p><strong>Año:</strong></p><p>${item['Año'] || item['anio'] || 'N/A'}</p></div>
-          <div><p><strong>Estatus vigente:</strong></p><p>${item['Estatus vigente'] || item['Estatus'] || 'N/A'}</p></div>
-          <div><p><strong>Carta Nacional:</strong></p><p>${item['Carta Nacional'] || 'N/A'}</p></div>
+          <div><p><strong>Zona:</strong></p><p>${zona}</p></div>
+          <div><p><strong>Año:</strong></p><p>${anio}</p></div>
+          <div><p><strong>Estatus vigente:</strong></p><p>${estatus}</p></div>
+          <div><p><strong>Carta Nacional:</strong></p><p>${carta}</p></div>
         </div>
       </td>
     `;
@@ -421,36 +411,29 @@ function matchesFiltro(obj, input) {
 
 function filtrarDashboardGlobal() {
   const input = document.getElementById("search-esp").value.toLowerCase().trim();
-  
   const mapTitleText = document.querySelector("#map-title .titulo-dinamico-filtro");
-  const chartTitleText = document.querySelector("#chart-title .titulo-dinamico-filtro");
   
   if (input) {
       mapTitleText.innerText = `- Filtro: "${input}"`;
-      chartTitleText.innerText = `- Filtro: "${input}"`;
   } else {
       mapTitleText.innerText = `(Global)`;
-      chartTitleText.innerText = `(Global)`;
   }
 
   const comunesQueHacenMatch = new Set();
 
-  datosIndice.forEach(item => { if(matchesFiltro(item, input)) comunesQueHacenMatch.add(item['Común']); });
-  datosCoordenadas.forEach(item => { if(matchesFiltro(item, input)) comunesQueHacenMatch.add(item['Común']); });
-  datosCaptura.forEach(item => { if(matchesFiltro(item, input)) comunesQueHacenMatch.add(item['Común']); });
+  datosIndice.forEach(item => { if(matchesFiltro(item, input)) comunesQueHacenMatch.add(item['Común'] || item['común'] || item['comun']); });
+  datosCoordenadas.forEach(item => { if(matchesFiltro(item, input)) comunesQueHacenMatch.add(item['Común'] || item['común'] || item['comun']); });
 
   const itemsReales = datosIndice.filter(item => {
-    const c = item['Común'];
+    const c = item['Común'] || item['común'] || item['comun'];
     if (!c) return matchesFiltro(item, input);
     return comunesQueHacenMatch.has(c);
   });
 
   renderTabla(itemsReales);
   
-  const comunesActivos = itemsReales.map(item => item['Común']).filter(c => c);
-  
+  const comunesActivos = itemsReales.map(item => item['Común'] || item['común'] || item['comun']).filter(c => c);
   renderMarcadoresGlobales(comunesActivos, input);
-  actualizarGraficaConsolidada(comunesActivos, input);
 }
 
 function initMap() {
@@ -459,7 +442,7 @@ function initMap() {
   markerCluster = L.markerClusterGroup();
   map.addLayer(markerCluster);
   
-  renderMarcadoresGlobales(datosIndice.map(item => item['Común']));
+  renderMarcadoresGlobales(datosIndice.map(item => item['Común'] || item['común'] || item['comun']));
 }
 
 function renderMarcadoresGlobales(comunesValidos, input = '') {
@@ -468,28 +451,28 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
   
   if (comunesValidos.length > 0) {
     datosCoordenadas.forEach(upa => {
-      const comunUPA = upa['Común'] || '';
+      const comunUPA = upa['Común'] || upa['común'] || upa['comun'] || '';
       if (!comunesValidos.includes(comunUPA)) return;
 
-      const indiceRow = datosIndice.find(i => i['Común'] === comunUPA) || {};
+      const indiceRow = datosIndice.find(i => (i['Común'] || i['común'] || i['comun']) === comunUPA) || {};
       const speciesMatched = matchesFiltro(indiceRow, input);
 
       if (input && !matchesFiltro(upa, input) && !speciesMatched) {
         return;
       }
 
-      const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
-      const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
+      const lat = parseFloat(upa['LATITUD F'] || upa['latitud f'] || upa['Latitud'] || upa['latitud']);
+      const lng = parseFloat(upa['LONGITD F'] || upa['longitd f'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
       
       if(!isNaN(lat) && !isNaN(lng)) {
         puntosVisibles = true;
         const marker = L.marker([lat, lng]);
         marker.bindPopup(`
           <div style="font-family:'Noto Sans'; font-size:13px;">
-            <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}</h4>
-            <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || comunUPA}</p>
-            <p style="margin-bottom:4px;"><b>Superficie (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
-            <p style="margin-bottom:0;"><b>Tipo de instalación:</b> ${upa['Tipo de instalación'] || 'N/A'}</p>
+            <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || upa['nombre'] || 'Unidad de Producción'}</h4>
+            <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || upa['nombre común'] || comunUPA}</p>
+            <p style="margin-bottom:4px;"><b>Superficie (ha):</b> ${upa['Superficie de producción (ha)'] || upa['superficie de producción (ha)'] || 'N/A'}</p>
+            <p style="margin-bottom:0;"><b>Tipo de instalación:</b> ${upa['Tipo de instalación'] || upa['tipo de instalación'] || 'N/A'}</p>
           </div>
         `);
         markerCluster.addLayer(marker);
@@ -511,152 +494,52 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
   }
 }
 
-function generarColorPorPaleta(index, total) {
-  const hexColors = ['#9b2247', '#1e5b4f', '#a57f2c', '#33508d', '#611232'];
-  return hexColors[index % hexColors.length];
-}
-
-function actualizarGraficaConsolidada(comunesValidos, input = '') {
-  const container = document.getElementById('global-chart-wrapper');
-  
-  if (capChart) {
-    capChart.destroy();
-    capChart = null;
-  }
-
-  if (comunesValidos.length === 0) {
-    container.innerHTML = `<p style="color:var(--primary); text-align:center; padding-top:60px; font-family:'Noto Sans'; font-weight:600;">Sin registros estadísticos de producción</p>`;
-    return;
-  }
-
-  const datosFiltrados = datosCaptura.filter(item => {
-    if (!comunesValidos.includes(item['Común'])) return false;
-    
-    const comun = item['Común'] || '';
-    const indiceRow = datosIndice.find(i => i['Común'] === comun) || {};
-    const speciesMatched = matchesFiltro(indiceRow, input);
-
-    if (input && !matchesFiltro(item, input) && !speciesMatched) {
-        return false;
-    }
-    return true;
-  });
-  
-  if (datosFiltrados.length === 0) {
-    container.innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:60px; font-family:'Noto Sans';">Sin registros estadísticos de producción para la selección y región</p>`;
-    return;
-  }
-
-  container.innerHTML = `<canvas id="cap-chart"></canvas>`;
-
-  const añosSet = new Set();
-  const matrizDatos = {};
-  const totalesPorEntidad = {};
-
-  datosFiltrados.forEach(d => {
-    const year = (d['AÑO'] || d['Año'] || d['anio'] || '').toString().trim();
-    let entidad = (d['ENTIDAD'] || d['entidad'] || d['Entidad'] || 'No Especificado').toString().trim();
-    if (!year) return;
-
-    añosSet.add(year);
-
-    let rawPeso = d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso'] || '';
-    if (typeof rawPeso === 'string') rawPeso = rawPeso.replace(/[^0-9.]/g, '');
-    const pesoParsed = parseFloat(rawPeso);
-
-    if (!isNaN(pesoParsed) && pesoParsed > 0) {
-      if (!matrizDatos[year]) matrizDatos[year] = {};
-      if (!matrizDatos[year][entidad]) matrizDatos[year][entidad] = 0;
-      matrizDatos[year][entidad] += pesoParsed;
-
-      if (!totalesPorEntidad[entidad]) totalesPorEntidad[entidad] = 0;
-      totalesPorEntidad[entidad] += pesoParsed;
-    }
-  });
-
-  const labelsAnos = Array.from(añosSet).sort((a, b) => parseInt(a) - parseInt(b));
-
-  const entidadesOrdenadas = Object.keys(totalesPorEntidad).sort((a, b) => totalesPorEntidad[b] - totalesPorEntidad[a]);
-  const top5 = entidadesOrdenadas.slice(0, 5);
-  const otros = entidadesOrdenadas.slice(5);
-
-  const listaEntidadesFinal = [...top5];
-  if (otros.length > 0) listaEntidadesFinal.push('Otros');
-
-  const datasetsApilados = listaEntidadesFinal.map((entidad, idx) => {
-    const dataPorAño = labelsAnos.map(year => {
-      let suma = 0;
-      if (entidad === 'Otros') {
-        otros.forEach(e => {
-          if (matrizDatos[year] && matrizDatos[year][e]) suma += matrizDatos[year][e];
-        });
-      } else {
-        if (matrizDatos[year] && matrizDatos[year][entidad]) suma = matrizDatos[year][entidad];
-      }
-      return Math.round(suma / 1000); 
-    });
-
-    const bgColor = entidad === 'Otros' ? '#98989A' : generarColorPorPaleta(idx, top5.length);
-
-    return {
-      label: entidad,
-      data: dataPorAño,
-      backgroundColor: bgColor,
-      borderWidth: 0.5,
-      borderColor: '#ffffff'
-    };
-  });
-
-  const ctx = document.getElementById('cap-chart').getContext('2d');
-  capChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labelsAnos,
-      datasets: datasetsApilados
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      scales: {
-        x: { stacked: true },
-        y: { 
-          stacked: true, 
-          position: 'left', 
-          title: { display: true, text: 'Toneladas' } 
-        }
-      },
-      plugins: {
-        legend: {
-          display: true,
-          position: 'bottom',
-          labels: { boxWidth: 12, font: { size: 11, family: 'Noto Sans' }, color: '#161a1d' }
-        }
-      }
-    }
-  });
-}
-
 function renderDato(label, key, item) {
-  const val = item[key] || item[key + ':'] || '';
-  if (!val || val.trim() === '') return '';
+  const val = item[key] || item[key.toLowerCase()] || item[key + ':'] || item[key.toLowerCase() + ':'] || '';
+  if (!val || String(val).trim() === '') return '';
   return `<div class="data-item"><strong>${label}</strong><span>${val}</span></div>`;
 }
 
-function abrirFicha(valorComun) {
-  const itemFicha = datosFicha.find(d => d['Común'] === valorComun);
-  const itemIndice = datosIndice.find(d => d['Común'] === valorComun) || {};
-  const item = { ...itemIndice, ...(itemFicha || {}) };
-
+async function abrirFicha(valorComun) {
   const container = document.getElementById('ficha-container');
+  document.getElementById('main-dashboard').style.display = 'none';
+  document.getElementById('tab-ficha').style.display = 'block';
+  window.scrollTo(0, 0);
+
+  container.innerHTML = `
+    <div style="text-align:center; padding:100px;">
+      <div class="spinner"></div>
+      <p style="color:var(--primary); font-weight:600;">Extrayendo información técnica e historial estadístico...</p>
+    </div>
+  `;
+
+  let itemFicha = {};
+  let datosFiltradosCap = [];
+
+  try {
+    const { data: fData, error: fErr } = await supabase.from('fichas').select('*');
+    if (fData) {
+        itemFicha = fData.find(f => (f['Común'] || f['común'] || f['comun']) === valorComun) || {};
+    }
+
+    const { data: cData, error: cErr } = await supabase.from('captura').select('*');
+    if (cData) {
+        datosFiltradosCap = cData.filter(c => (c['Común'] || c['común'] || c['comun']) === valorComun);
+    }
+  } catch (error) {
+    console.error("Error al obtener datos dinámicos:", error);
+  }
+
+  const itemIndice = datosIndice.find(d => (d['Común'] || d['común'] || d['comun']) === valorComun) || {};
+  const item = { ...itemIndice, ...itemFicha };
   
-  const tituloPrincipal = item['Común'] || 'Especie';
-  const nombreComun = item['Nombre común'] || 'N/A';
-  const nombreCientifico = item['Nombre científico'] || item['Especie'] || '';
+  const tituloPrincipal = item['Común'] || item['común'] || item['comun'] || 'Especie';
+  const nombreComun = item['Nombre común'] || item['nombre común'] || 'N/A';
+  const nombreCientifico = item['Nombre científico'] || item['nombre científico'] || item['Especie'] || item['especie'] || '';
   
-  let imgUrl = item['Imagenspp'] || item['Foto de la especie'];
+  let imgUrl = item['Imagenspp'] || item['imagenspp'] || item['Foto de la especie'] || item['foto de la especie'];
   let imgHTML = '';
-  if(imgUrl && imgUrl.startsWith('http')) {
+  if(imgUrl && String(imgUrl).startsWith('http')) {
     imgHTML = `<div class="ficha-img-box"><img src="${imgUrl}" alt="${tituloPrincipal}"></div>`;
   }
 
@@ -670,7 +553,7 @@ function abrirFicha(valorComun) {
           <span style="font-size:20px; display:block; color:var(--text); font-weight:600; margin-top:4px;">${nombreComun}</span>
           <em style="color:var(--text2); font-size:16px; display:block; margin-top:4px;">${nombreCientifico}</em>
         </div>
-        <div style="display:flex; gap:24px; flex-wrap:wrap; background:#fff; padding:20px; border-radius:8px; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.05);">
+        <div style="display:flex; gap:24px; flex-wrap:wrap; background:var(--bg); padding:20px; border-radius:8px; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.05);">
           ${renderDato('Estatus del cultivo', 'Estatus del cultivo', item)}
           ${renderDato('Nivel de dominio biotecnológico', 'Nivel de dominio de la biotecnología', item)}
           ${renderDato('Origen', 'Origen', item)}
@@ -735,14 +618,14 @@ function abrirFicha(valorComun) {
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:30px;">
           <div>
             ${renderDato('Entidades de cultivo', 'ENTIDADES DE CULTIVO', item)}
-            ${renderDato('Antecedentes', 'ANTECEDENTES', item)}
+            ${renderDato('Antecedentes', 'Antecedentes', item)}
             ${renderDato('Desarrollo tecnológico', 'Desarrollo tecnológico', item)}
           </div>
           <div>
             ${renderDato('Limitantes técnico-biológicas', 'Limitantes técnico-biológicas de la actividad', item)}
             ${renderDato('Información y trámites', 'INFORMACIÓN Y TRÁMITES', item)}
             ${renderDato('Normatividad', 'NORMATIVIDAD', item)}
-            ${renderDato('Bibliografía', 'BIBLIOGRAFÍA CONSULTADA', item)}
+            ${renderDato('Bibliografía', 'Bibliografía consultada', item)}
           </div>
         </div>
       </div>
@@ -756,10 +639,6 @@ function abrirFicha(valorComun) {
     </div>
   `;
 
-  document.getElementById('main-dashboard').style.display = 'none';
-  document.getElementById('tab-ficha').style.display = 'block';
-  window.scrollTo(0, 0);
-
   setTimeout(() => {
     if(mapFichaInstance) mapFichaInstance.remove();
     mapFichaInstance = L.map('map-ficha').setView([23.6345, -102.5528], 5);
@@ -769,13 +648,14 @@ function abrirFicha(valorComun) {
     let hayPuntos = false;
 
     datosCoordenadas.forEach(upa => {
-      if ((upa['Común'] || '') === valorComun) {
-        const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
-        const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
+      const uComun = upa['Común'] || upa['común'] || upa['comun'] || '';
+      if (uComun === valorComun) {
+        const lat = parseFloat(upa['LATITUD F'] || upa['latitud f'] || upa['Latitud'] || upa['latitud']);
+        const lng = parseFloat(upa['LONGITD F'] || upa['longitd f'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
         if(!isNaN(lat) && !isNaN(lng)) {
           hayPuntos = true;
           const marker = L.marker([lat, lng]);
-          marker.bindPopup(`<div style="font-family:'Noto Sans'; font-size:13px;"><b>${upa['nombre_upa'] || 'Unidad'}</b></div>`);
+          marker.bindPopup(`<div style="font-size:13px;"><b>${upa['nombre_upa'] || upa['Nombre'] || upa['nombre'] || 'Unidad'}</b></div>`);
           clusterFicha.addLayer(marker);
         }
       }
@@ -787,12 +667,14 @@ function abrirFicha(valorComun) {
 
   setTimeout(() => {
     if (chartFichaInstance) chartFichaInstance.destroy();
-    const datosFiltradosCap = datosCaptura.filter(item => item['Común'] === valorComun);
+    
     if (datosFiltradosCap.length > 0) {
         const agregadosPorAno = {};
         datosFiltradosCap.forEach(d => {
-            const year = d['AÑO'] || d['Año'] || d['anio'];
-            const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
+            const year = d['AÑO'] || d['año'] || d['Año'] || d['anio'];
+            const pesoRaw = String(d['PESO VIVO (KG)'] || d['peso vivo (kg)'] || d['peso_kg'] || d['Peso'] || '0').replace(/[^0-9.]/g, '');
+            const peso = parseFloat(pesoRaw) || 0;
+            
             if (year) {
                 if (!agregadosPorAno[year]) agregadosPorAno[year] = 0;
                 agregadosPorAno[year] += peso;
@@ -810,15 +692,15 @@ function abrirFicha(valorComun) {
                 datasets: [{
                     label: 'Producción Anual (Kg)',
                     data: dataKg,
-                    backgroundColor: 'rgba(155, 34, 71, 0.15)',
-                    borderColor: '#9b2247',
+                    backgroundColor: 'rgba(97, 18, 50, 0.15)',
+                    borderColor: 'var(--primary)',
                     borderWidth: 2,
                     fill: true
                 }]
             }
         });
     } else {
-        document.getElementById('chart-ficha-wrapper').innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:40px;">Sin historial estadístico disponible para esta especie.</p>`;
+        document.getElementById('chart-ficha-wrapper').innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:40px;">Sin historial estadístico disponible en base de datos para esta especie.</p>`;
     }
   }, 100);
 }
@@ -829,7 +711,7 @@ function cerrarFicha() {
   setTimeout(() => { if(map) map.invalidateSize(); }, 50);
 }
 
-window.onload = sincronizarGoogleSheets;
+window.onload = sincronizarBaseDatos;
 </script>
 </body>
 </html>
