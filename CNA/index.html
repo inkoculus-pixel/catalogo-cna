@@ -5,64 +5,176 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Catálogo de Recursos | IMIPAS</title>
 
+<!-- Leaflet CSS y JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
+<!-- Chart.js y PapaParse -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
+<!-- Fuentes -->
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
+  /* PALETA DE COLORES INSTITUCIONAL */
   --gob-green: #002f2a;
   --verde-claro: #1e5b4f;
+  
   --primary: #9b2247; 
   --primary-dark: #611232;
+  
   --secondary: #a57f2c; 
   --dorado-claro: #e6d194;
+  
   --azul: #33508d;
+  
   --text: #161a1d;
   --text2: #98989A;
+  
   --bg: #ffffff; 
   --border: rgba(152, 152, 154, 0.4);
 }
 body{font-family:'Montserrat', 'Noto Sans', Arial, sans-serif; background:var(--bg); color:var(--text); min-height:100vh;}
 
-.gobmx-topbar { background-color: var(--gob-green); height: 48px; display: flex; align-items: center; padding: 0 5%; }
-.gobmx-topbar img { height: 28px; }
+/* HEADER GOB.MX OFICIAL */
+.gobmx-topbar {
+  background-color: var(--gob-green);
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 5%;
+}
+.gobmx-topbar img {
+  height: 28px;
+}
 
-.imipas-header { background-color: #ffffff; padding: 24px 5%; border-bottom: 4px solid var(--primary); display: flex; flex-direction: column; gap: 6px; }
-.imipas-header h1 { font-size: 24px; color: var(--gob-green); font-weight: 700; line-height: 1.2; }
-.imipas-header h2 { font-size: 16px; color: var(--text2); font-weight: 500; display: flex; align-items: center; gap: 12px; }
-.version-badge { font-size: 11px; background: var(--gob-green); color: white; padding: 3px 8px; border-radius: 12px; font-weight: 600; font-family: 'Noto Sans', sans-serif; }
+/* HEADER IMIPAS */
+.imipas-header {
+  background-color: #ffffff;
+  padding: 24px 5%;
+  border-bottom: 4px solid var(--primary);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.imipas-header h1 {
+  font-size: 24px;
+  color: var(--gob-green);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.imipas-header h2 {
+  font-size: 16px;
+  color: var(--text2);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.version-badge {
+  font-size: 11px;
+  background: var(--gob-green);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-family: 'Noto Sans', sans-serif;
+}
 
-.dashboard-container { display: flex; flex-direction: column; gap: 24px; padding: 30px 5%; max-width: 1800px; margin: 0 auto; }
-.filter-section { width: 100%; }
-.map-chart-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-@media (max-width: 1200px) { .map-chart-section { grid-template-columns: 1fr; } }
-.table-section { width: 100%; }
+/* LAYOUT DASHBOARD */
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 30px 5%;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.filter-section {
+  width: 100%;
+}
+
+.map-chart-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1200px) {
+  .map-chart-section { grid-template-columns: 1fr; }
+}
+
+.table-section {
+  width: 100%;
+}
+
 .tab-content{display:none; padding:30px 5% 40px 5%; max-width:1600px; margin:0 auto;}
 .tab-content.active{display:block}
 
+/* LOADER */
 #loader{text-align:center; padding:80px; font-size:16px; color:var(--text2);}
 .spinner {border: 4px solid rgba(0,0,0,.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: var(--primary); animation: spin 1s linear infinite; margin: 0 auto 15px;}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-.map-card { background: #fff; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; position: relative; display: flex; flex-direction: column; }
-.map-card h3, .chart-wrap h3 { padding: 16px 20px; background: #f8f9fa; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--gob-green); text-transform: uppercase; letter-spacing: 0.5px; }
-.titulo-dinamico-filtro { color: var(--primary); font-weight: 700; text-transform: none; }
-#map{height: 400px; width:100%; z-index: 1; flex-grow: 1;}
-#map-empty-overlay { display: none; position: absolute; top: 50px; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); z-index: 10; justify-content: center; align-items: center; font-family: 'Noto Sans'; color: var(--primary); font-weight: 600; }
+/* CONTENEDORES MAPA Y GRÁFICA */
+.map-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.map-card h3, .chart-wrap h3 {
+  padding: 16px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--gob-green);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.titulo-dinamico-filtro {
+  color: var(--primary);
+  font-weight: 700;
+  text-transform: none;
+}
 
+#map{height: 400px; width:100%; z-index: 1; flex-grow: 1;}
+
+#map-empty-overlay {
+  display: none;
+  position: absolute;
+  top: 50px; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.85);
+  z-index: 10;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Noto Sans';
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* BUSCADOR Y TABLA */
 .filter-bar{display:flex;gap:12px;}
 .filter-bar input{padding:16px 20px;border:1px solid var(--border);border-radius:8px;font-size:15px;flex:1; font-family:'Noto Sans'; box-shadow: 0 1px 4px rgba(0,0,0,.05);}
 .filter-bar input:focus{outline:none; border-color:var(--primary);}
-.table-wrap { background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); }
+.table-wrap {
+  background:#fff;
+  border-radius:8px;
+  overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,.08);
+  border: 1px solid var(--border);
+}
 table{width:100%;border-collapse:collapse;}
 thead{background:var(--gob-green);color:#fff}
 th{padding:14px 16px;text-align:left;font-size:13px;font-weight:600; text-transform:uppercase; letter-spacing: 0.5px;}
@@ -70,16 +182,23 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 .main-row{transition: background 0.2s; cursor: pointer;}
 .main-row:hover{background:#fafafa;}
-.expander { margin-right: 8px; display: inline-block; transition: transform 0.2s ease; }
+.expander {
+  margin-right: 8px;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
 .details-row{display:none; background:#fafafa;}
 .details-content{padding:16px 20px; border-left:4px solid var(--primary); color:var(--text2); font-size:13px; display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;}
 
+/* LINKS DE NAVEGACIÓN */
 .link-especie{color:var(--primary); text-decoration:none; font-weight:700; cursor:pointer;}
 .link-especie:hover{text-decoration:underline; color:var(--secondary);}
 .text-static{color:var(--text); font-weight:500;}
 
+/* DISEÑO DE LA FICHA TÉCNICA */
 .btn-back{background:#fff; border:1px solid var(--border); padding:10px 20px; border-radius:6px; cursor:pointer; font-family:'Montserrat'; font-weight:600; color:var(--gob-green); margin-bottom:24px; display:inline-flex; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,.05);}
 .btn-back:hover{background:#f0f0f0;}
+
 .ficha-header{display:flex; flex-wrap:wrap; gap:30px; margin-bottom:30px; align-items:flex-start;}
 .ficha-img-box{flex:0 0 350px; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#fff; text-align:center; box-shadow:0 1px 4px rgba(0,0,0,.08);}
 .ficha-img-box img{width:100%; height:auto; object-fit:cover; display:block;}
@@ -95,29 +214,44 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 #map-ficha{height:400px; width:100%; border-radius:0 0 8px 8px; z-index:1;}
 .chart-ficha-container {position: relative; height: 350px; width: 100%;}
+
+/* GRÁFICA GLOBAL CONTENEDOR */
 .chart-wrap{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column;}
 .chart-container-box { padding: 20px; position: relative; min-height: 360px; flex-grow: 1;}
 
-.gobmx-footer { background-color: var(--gob-green); height: 60px; background-image: url('https://framework-gb.cdn.gob.mx/landing/img/pleca.svg'); background-repeat: repeat-x; background-position: bottom; margin-top: 60px; }
+/* FOOTER OFICIAL */
+.gobmx-footer {
+  background-color: var(--gob-green);
+  height: 60px;
+  background-image: url('https://framework-gb.cdn.gob.mx/landing/img/pleca.svg');
+  background-repeat: repeat-x;
+  background-position: bottom;
+  margin-top: 60px;
+}
 </style>
 </head>
 <body>
 
+<!-- Barra Superior de Gobierno -->
 <div class="gobmx-topbar">
   <img src="https://framework-gb.cdn.gob.mx/landing/img/logoheader.svg" alt="Gobierno de México">
 </div>
 
+<!-- Encabezado Institucional -->
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v3.0</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v2.9.1</span></h2>
 </header>
 
+<!-- Pantalla de Carga -->
 <div id="loader">
   <div class="spinner"></div>
   <p>Sincronizando datos de la RNIIPA...</p>
 </div>
 
+<!-- Tablero Principal -->
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
+  
   <div class="filter-section">
     <div class="filter-bar">
       <input type="text" id="search-esp" placeholder="Buscar por recurso, nombre común, especie, zona o entidad..." onkeyup="filtrarDashboardGlobal()">
@@ -154,8 +288,10 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
       </table>
     </div>
   </div>
+
 </div>
 
+<!-- Sección de Ficha Técnica Desplegable -->
 <div id="tab-ficha" class="tab-content">
   <button class="btn-back" onclick="cerrarFicha()">← Regresar al Tablero Principal</button>
   <div id="ficha-container"></div>
@@ -164,6 +300,10 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 <footer class="gobmx-footer"></footer>
 
 <script>
+/**
+ * USO DEL ID ORIGINAL: Asegúrate de que el documento en Google Sheets 
+ * esté configurado como "Cualquier persona con el enlace puede leer".
+ */
 const SHEET_ID = '1beFh_u5LFSZNiF5Gpk9SYpWOrJWlrRzSZtuNkf4qcfs';
 
 let datosIndice = [];
@@ -178,6 +318,7 @@ let chartFichaInstance = null;
 
 async function sincronizarGoogleSheets() {
   try {
+    // Usamos el endpoint oficial de visualización que sí acepta "&sheet=Nombre"
     const urlIndice = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=indice`;
     const urlCoordenadas = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=coordenadas`;
     const urlCaptura = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=captura`;
@@ -190,6 +331,7 @@ async function sincronizarGoogleSheets() {
       fetch(urlFicha).catch(() => null)
     ]);
 
+    // PapaParse convertirá el CSV directo a JSON
     datosIndice = Papa.parse(await resIndice.text(), { header: true, skipEmptyLines: true }).data;
     datosCoordenadas = Papa.parse(await resCoord.text(), { header: true, skipEmptyLines: true }).data;
     
@@ -204,7 +346,7 @@ async function sincronizarGoogleSheets() {
     actualizarGraficaConsolidada(datosIndice.map(item => item['Común']));
 
   } catch (error) {
-    document.getElementById('loader').innerHTML = `<p style="color:var(--primary)">Error al conectar con la base de datos de la RNIIPA.</p>`;
+    document.getElementById('loader').innerHTML = `<p style="color:var(--primary)">Error al conectar con la base de datos de la RNIIPA. Verifica que el archivo de Google Sheets tenga permisos de acceso público.</p>`;
     console.error("Error cargando hojas: ", error);
   }
 }
@@ -326,4 +468,369 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
       const comunUPA = upa['Común'] || '';
       if (!comunesValidos.includes(comunUPA)) return;
 
-      const indiceRow = datosIndice.find(i => i
+      const indiceRow = datosIndice.find(i => i['Común'] === comunUPA) || {};
+      const speciesMatched = matchesFiltro(indiceRow, input);
+
+      if (input && !matchesFiltro(upa, input) && !speciesMatched) {
+        return;
+      }
+
+      const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
+      const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
+      
+      if(!isNaN(lat) && !isNaN(lng)) {
+        puntosVisibles = true;
+        const marker = L.marker([lat, lng]);
+        marker.bindPopup(`
+          <div style="font-family:'Noto Sans'; font-size:13px;">
+            <h4 style="color:var(--primary); margin-bottom:6px; border-bottom:1px solid var(--border); padding-bottom:4px;">${upa['nombre_upa'] || upa['Nombre'] || 'Unidad de Producción'}</h4>
+            <p style="margin-bottom:4px;"><b>Especie:</b> ${upa['Nombre común'] || comunUPA}</p>
+            <p style="margin-bottom:4px;"><b>Superficie (ha):</b> ${upa['Superficie de producción (ha)'] || 'N/A'}</p>
+            <p style="margin-bottom:0;"><b>Tipo de instalación:</b> ${upa['Tipo de instalación'] || 'N/A'}</p>
+          </div>
+        `);
+        markerCluster.addLayer(marker);
+      }
+    });
+  }
+
+  const overlay = document.getElementById('map-empty-overlay');
+  if (puntosVisibles) {
+    overlay.style.display = 'none';
+    if (!input || input.trim() === '') {
+      map.setView([23.6345, -102.5528], 5);
+    } else {
+      map.fitBounds(markerCluster.getBounds().pad(0.1));
+    }
+  } else {
+    overlay.style.display = 'flex';
+    overlay.innerText = "Sin registros de coordenadas asociadas a esta ubicación o criterio";
+  }
+}
+
+function generarColorPorPaleta(index, total) {
+  const hexColors = ['#9b2247', '#1e5b4f', '#a57f2c', '#33508d', '#611232'];
+  return hexColors[index % hexColors.length];
+}
+
+function actualizarGraficaConsolidada(comunesValidos, input = '') {
+  const container = document.getElementById('global-chart-wrapper');
+  
+  if (capChart) {
+    capChart.destroy();
+    capChart = null;
+  }
+
+  if (comunesValidos.length === 0) {
+    container.innerHTML = `<p style="color:var(--primary); text-align:center; padding-top:60px; font-family:'Noto Sans'; font-weight:600;">Sin registros estadísticos de producción</p>`;
+    return;
+  }
+
+  const datosFiltrados = datosCaptura.filter(item => {
+    if (!comunesValidos.includes(item['Común'])) return false;
+    
+    const comun = item['Común'] || '';
+    const indiceRow = datosIndice.find(i => i['Común'] === comun) || {};
+    const speciesMatched = matchesFiltro(indiceRow, input);
+
+    if (input && !matchesFiltro(item, input) && !speciesMatched) {
+        return false;
+    }
+    return true;
+  });
+  
+  if (datosFiltrados.length === 0) {
+    container.innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:60px; font-family:'Noto Sans';">Sin registros estadísticos de producción para la selección y región</p>`;
+    return;
+  }
+
+  container.innerHTML = `<canvas id="cap-chart"></canvas>`;
+
+  const añosSet = new Set();
+  const matrizDatos = {};
+  const totalesPorEntidad = {};
+
+  datosFiltrados.forEach(d => {
+    const year = (d['AÑO'] || d['Año'] || d['anio'] || '').toString().trim();
+    let entidad = (d['ENTIDAD'] || d['entidad'] || d['Entidad'] || 'No Especificado').toString().trim();
+    if (!year) return;
+
+    añosSet.add(year);
+
+    let rawPeso = d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso'] || '';
+    if (typeof rawPeso === 'string') rawPeso = rawPeso.replace(/[^0-9.]/g, '');
+    const pesoParsed = parseFloat(rawPeso);
+
+    if (!isNaN(pesoParsed) && pesoParsed > 0) {
+      if (!matrizDatos[year]) matrizDatos[year] = {};
+      if (!matrizDatos[year][entidad]) matrizDatos[year][entidad] = 0;
+      matrizDatos[year][entidad] += pesoParsed;
+
+      if (!totalesPorEntidad[entidad]) totalesPorEntidad[entidad] = 0;
+      totalesPorEntidad[entidad] += pesoParsed;
+    }
+  });
+
+  const labelsAnos = Array.from(añosSet).sort((a, b) => parseInt(a) - parseInt(b));
+
+  const entidadesOrdenadas = Object.keys(totalesPorEntidad).sort((a, b) => totalesPorEntidad[b] - totalesPorEntidad[a]);
+  const top5 = entidadesOrdenadas.slice(0, 5);
+  const otros = entidadesOrdenadas.slice(5);
+
+  const listaEntidadesFinal = [...top5];
+  if (otros.length > 0) listaEntidadesFinal.push('Otros');
+
+  const datasetsApilados = listaEntidadesFinal.map((entidad, idx) => {
+    const dataPorAño = labelsAnos.map(year => {
+      let suma = 0;
+      if (entidad === 'Otros') {
+        otros.forEach(e => {
+          if (matrizDatos[year] && matrizDatos[year][e]) suma += matrizDatos[year][e];
+        });
+      } else {
+        if (matrizDatos[year] && matrizDatos[year][entidad]) suma = matrizDatos[year][entidad];
+      }
+      return Math.round(suma / 1000); 
+    });
+
+    const bgColor = entidad === 'Otros' ? '#98989A' : generarColorPorPaleta(idx, top5.length);
+
+    return {
+      label: entidad,
+      data: dataPorAño,
+      backgroundColor: bgColor,
+      borderWidth: 0.5,
+      borderColor: '#ffffff'
+    };
+  });
+
+  const ctx = document.getElementById('cap-chart').getContext('2d');
+  capChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labelsAnos,
+      datasets: datasetsApilados
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { stacked: true },
+        y: { 
+          stacked: true, 
+          position: 'left', 
+          title: { display: true, text: 'Toneladas' } 
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { boxWidth: 12, font: { size: 11, family: 'Noto Sans' }, color: '#161a1d' }
+        }
+      }
+    }
+  });
+}
+
+function renderDato(label, key, item) {
+  const val = item[key] || item[key + ':'] || '';
+  if (!val || val.trim() === '') return '';
+  return `<div class="data-item"><strong>${label}</strong><span>${val}</span></div>`;
+}
+
+function abrirFicha(valorComun) {
+  const itemFicha = datosFicha.find(d => d['Común'] === valorComun);
+  const itemIndice = datosIndice.find(d => d['Común'] === valorComun) || {};
+  const item = { ...itemIndice, ...(itemFicha || {}) };
+
+  const container = document.getElementById('ficha-container');
+  
+  const tituloPrincipal = item['Común'] || 'Especie';
+  const nombreComun = item['Nombre común'] || 'N/A';
+  const nombreCientifico = item['Nombre científico'] || item['Especie'] || '';
+  
+  let imgUrl = item['Imagenspp'] || item['Foto de la especie'];
+  let imgHTML = '';
+  if(imgUrl && imgUrl.startsWith('http')) {
+    imgHTML = `<div class="ficha-img-box"><img src="${imgUrl}" alt="${tituloPrincipal}"></div>`;
+  }
+
+  container.innerHTML = `
+    <div class="ficha-header">
+      ${imgHTML}
+      <div class="ficha-title-box">
+        <h1>${tituloPrincipal}</h1>
+        <div style="margin-bottom: 24px; border-bottom: 2px solid var(--gob-green); padding-bottom: 12px;">
+          <strong style="color:var(--primary); font-size:13px; text-transform:uppercase;">Nombre Común</strong>
+          <span style="font-size:20px; display:block; color:var(--text); font-weight:600; margin-top:4px;">${nombreComun}</span>
+          <em style="color:var(--text2); font-size:16px; display:block; margin-top:4px;">${nombreCientifico}</em>
+        </div>
+        <div style="display:flex; gap:24px; flex-wrap:wrap; background:#fff; padding:20px; border-radius:8px; border:1px solid var(--border); box-shadow:0 1px 3px rgba(0,0,0,.05);">
+          ${renderDato('Estatus del cultivo', 'Estatus del cultivo', item)}
+          ${renderDato('Nivel de dominio biotecnológico', 'Nivel de dominio de la biotecnología', item)}
+          ${renderDato('Origen', 'Origen', item)}
+          ${renderDato('Mercado', 'Mercado', item)}
+        </div>
+      </div>
+    </div>
+
+    <div class="ficha-grid">
+      <div class="ficha-card" style="grid-column: 1 / -1; padding:0; overflow:hidden;">
+        <h4 style="padding: 24px 24px 0 24px; border-bottom: none;">Distribución de UPAs para ${tituloPrincipal}</h4>
+        <div id="map-ficha"></div>
+      </div>
+
+      <div class="ficha-card">
+        <h4>Biología y Ecología</h4>
+        ${renderDato('Distribución geográfica', 'Distribución geográfica', item)}
+        ${renderDato('Hábitat (natural)', 'Hábitat (natural)', item)}
+        ${renderDato('Morfología', 'Morfología', item)}
+        ${renderDato('Ciclo de vida', 'Ciclo de vida', item)}
+        ${renderDato('Alimentación en medio natural', 'Alimentación en medio natural', item)}
+      </div>
+
+      <div class="ficha-card">
+        <h4>Biotecnología y Cultivo</h4>
+        ${renderDato('Biotecnología', 'Biotecnología', item)}
+        ${renderDato('Sistemas de cultivo', 'Sistemas de cultivo', item)}
+        ${renderDato('Artes de cultivo', 'Artes de cultivo', item)}
+        ${renderDato('Características de la zona', 'Características de la zona de cultivo', item)}
+        ${renderDato('Densidad de siembra', 'Densidad de siembra', item)}
+        ${renderDato('Flujo de agua', 'Promedio de flujo de agua para el cultivo', item)}
+        ${renderDato('Tamaño para siembra', 'Tamaño del organismo para siembra', item)}
+        ${renderDato('Origen / Procedencia semilla', 'Origen semilla', item)}
+        ${renderDato('Procedencia', 'Procedencia', item)}
+        ${renderDato('Alimento', 'ALIMENTO', item)}
+        ${renderDato('Tiempo de cultivo', 'Tiempo de cultivo', item)}
+        ${renderDato('Porcentaje de sobrevivencia', 'Porcentaje de sobrevivencia', item)}
+        ${renderDato('Tamaño de cosecha', 'Tamaño promedio de cosecha', item)}
+      </div>
+
+      <div class="ficha-card">
+        <h4>Sanidad y Comercialización</h4>
+        ${renderDato('Importancia de sanidad', 'Importancia de la sanidad acuícola', item)}
+        ${renderDato('Enfermedades reportadas', 'Enfermedades reportadas', item)}
+        ${renderDato('Sanidad general', 'Sanidad', item)}
+        ${renderDato('Buenas prácticas', 'Buenas prácticas de producción acuícola', item)}
+        ${renderDato('Comercialización', 'Comercialización', item)}
+        ${renderDato('Presentación del producto', 'Presentación del producto', item)}
+        ${renderDato('Precios', 'Precios del producto', item)}
+        ${renderDato('Mercado del producto', 'Mercado del producto', item)}
+      </div>
+
+      <div class="ficha-card" style="grid-column: 1 / -1;">
+        <h4>Información Detallada</h4>
+        ${renderDato('Manejo ecosistémico', 'MANEJO ECOSISTEMICO', item)}
+        ${renderDato('Efectos ambientales', 'Efectos ambientales y cambio climático', item)}
+        ${renderDato('Tecnología de alimentos', 'Tecnología de alimentos', item)}
+      </div>
+
+      <div class="ficha-card" style="grid-column: 1 / -1;">
+        <h4>Información Institucional</h4>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:30px;">
+          <div>
+            ${renderDato('Entidades de cultivo', 'ENTIDADES DE CULTIVO', item)}
+            ${renderDato('Antecedentes', 'ANTECEDENTES', item)}
+            ${renderDato('Desarrollo tecnológico', 'Desarrollo tecnológico', item)}
+          </div>
+          <div>
+            ${renderDato('Limitantes técnico-biológicas', 'Limitantes técnico-biológicas de la actividad', item)}
+            ${renderDato('Información y trámites', 'INFORMACIÓN Y TRÁMITES', item)}
+            ${renderDato('Normatividad', 'NORMATIVIDAD', item)}
+            ${renderDato('Bibliografía', 'BIBLIOGRAFÍA CONSULTADA', item)}
+          </div>
+        </div>
+      </div>
+
+      <div class="ficha-card" style="grid-column: 1 / -1;">
+        <h4>Datos Estadísticos de Producción Histórica</h4>
+        <div id="chart-ficha-wrapper" class="chart-ficha-container">
+           <canvas id="ficha-cap-chart"></canvas>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('main-dashboard').style.display = 'none';
+  document.getElementById('tab-ficha').style.display = 'block';
+  window.scrollTo(0, 0);
+
+  setTimeout(() => {
+    if(mapFichaInstance) mapFichaInstance.remove();
+    mapFichaInstance = L.map('map-ficha').setView([23.6345, -102.5528], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mapFichaInstance);
+    
+    const clusterFicha = L.markerClusterGroup();
+    let hayPuntos = false;
+
+    datosCoordenadas.forEach(upa => {
+      if ((upa['Común'] || '') === valorComun) {
+        const lat = parseFloat(upa['LATITUD F'] || upa['Latitud'] || upa['latitud']);
+        const lng = parseFloat(upa['LONGITD F'] || upa['Longitud'] || upa['Logitud'] || upa['longitud']);
+        if(!isNaN(lat) && !isNaN(lng)) {
+          hayPuntos = true;
+          const marker = L.marker([lat, lng]);
+          marker.bindPopup(`<div style="font-family:'Noto Sans'; font-size:13px;"><b>${upa['nombre_upa'] || 'Unidad'}</b></div>`);
+          clusterFicha.addLayer(marker);
+        }
+      }
+    });
+
+    mapFichaInstance.addLayer(clusterFicha);
+    if (hayPuntos) mapFichaInstance.fitBounds(clusterFicha.getBounds().pad(0.1));
+  }, 100);
+
+  setTimeout(() => {
+    if (chartFichaInstance) chartFichaInstance.destroy();
+    const datosFiltradosCap = datosCaptura.filter(item => item['Común'] === valorComun);
+    if (datosFiltradosCap.length > 0) {
+        const agregadosPorAno = {};
+        datosFiltradosCap.forEach(d => {
+            const year = d['AÑO'] || d['Año'] || d['anio'];
+            const peso = parseFloat(d['PESO VIVO (KG)'] || d['peso_kg'] || d['Peso']) || 0;
+            if (year) {
+                if (!agregadosPorAno[year]) agregadosPorAno[year] = 0;
+                agregadosPorAno[year] += peso;
+            }
+        });
+
+        const labels = Object.keys(agregadosPorAno).sort((a, b) => parseInt(a) - parseInt(b));
+        const dataKg = labels.map(year => agregadosPorAno[year]);
+
+        const ctxFicha = document.getElementById('ficha-cap-chart').getContext('2d');
+        chartFichaInstance = new Chart(ctxFicha, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Producción Anual (Kg)',
+                    data: dataKg,
+                    backgroundColor: 'rgba(155, 34, 71, 0.15)',
+                    borderColor: '#9b2247',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            }
+        });
+    } else {
+        document.getElementById('chart-ficha-wrapper').innerHTML = `<p style="color:var(--text2); text-align:center; padding-top:40px;">Sin historial estadístico disponible para esta especie.</p>`;
+    }
+  }, 100);
+}
+
+function cerrarFicha() {
+  document.getElementById('tab-ficha').style.display = 'none';
+  document.getElementById('main-dashboard').style.display = 'flex';
+  setTimeout(() => { 
+    if(map) {
+      map.invalidateSize(); 
+    }
+  }, 50);
+}
+
+window.onload = sincronizarGoogleSheets;
+</script>
+</body>
+</html>
