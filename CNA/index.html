@@ -48,36 +48,47 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
 <div class="gobmx-topbar"><img src="https://framework-gb.cdn.gob.mx/landing/img/logoheader.svg" alt="Gobierno de México"></div>
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v3.3</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v3.5</span></h2>
 </header>
 <div id="loader"><div class="spinner"></div><p>Cargando base de datos...</p></div>
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
-  <div class="filter-section"><div class="filter-bar"><input type="text" id="search-esp" placeholder="Buscar por recurso, nombre común, especie, zona o entidad..." onkeyup="filtrarDashboardGlobal()"></div></div>
+  <div class="filter-section"><div class="filter-bar"><input type="text" id="search-esp" placeholder="Buscar..." onkeyup="filtrarDashboardGlobal()"></div></div>
   <div class="map-chart-section">
     <div class="map-card"><h3 id="map-title">Distribución Geográfica <span class="titulo-dinamico-filtro">(Global)</span></h3><div id="map-empty-overlay">Sin registros</div><div id="map"></div></div>
-    <div class="chart-wrap"><h3 id="chart-title">Aviso Estadístico</h3><div class="chart-container-box" id="global-chart-wrapper" style="padding:20px;"><p style="color:var(--text2); text-align:center;">Seleccione una especie para ver historial.</p></div></div>
+    <div class="chart-wrap"><h3 id="chart-title">Aviso Estadístico</h3><div class="chart-container-box" id="global-chart-wrapper" style="padding:20px;"><p style="color:var(--text2); text-align:center;">Seleccione una especie.</p></div></div>
   </div>
   <div class="table-section"><div class="table-wrap"><table id="tabla-recursos"><thead><tr><th>Recurso</th><th>Nombre común</th><th>Especie</th><th>Litoral</th></tr></thead><tbody id="esp-tbody"></tbody></table></div></div>
 </div>
 <div id="tab-ficha" class="tab-content"><button class="btn-back" onclick="cerrarFicha()">← Regresar</button><div id="ficha-container"></div></div>
 <footer class="gobmx-footer"></footer>
 <script>
-const supabaseUrl = 'https://fhhocpfjwyhowrhrrqmh.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+// Inicialización segura del cliente Supabase
+if (!window.supabaseClient) {
+  window.supabaseClient = supabase.createClient(
+    'https://fhhocpfjwyhowrhrrqmh.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo'
+  );
+}
+const supabase = window.supabaseClient;
 
 let datosIndice = [], datosCoordenadas = [], map, markerCluster;
 
 async function sincronizarBaseDatos() {
   try {
-    const [pRes, cRes] = await Promise.all([supabase.from('indice').select('*'), supabase.from('coordenadas').select('*')]);
+    document.getElementById('loader').style.display = 'block';
+    const [pRes, cRes] = await Promise.all([
+        supabase.from('indice').select('*'), 
+        supabase.from('coordenadas').select('*')
+    ]);
     if (pRes.error || cRes.error) throw "Error de conexión";
     datosIndice = pRes.data; datosCoordenadas = cRes.data;
     document.getElementById('loader').style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'flex';
     renderTabla(datosIndice);
     initMap();
-  } catch (e) { document.getElementById('loader').innerHTML = `<p style="color:red">Error al conectar.</p>`; }
+  } catch (e) { 
+    document.getElementById('loader').innerHTML = `<p style="color:red">Error al conectar: ${e}</p>`; 
+  }
 }
 
 function renderTabla(datos) {
@@ -87,12 +98,15 @@ function renderTabla(datos) {
     const c = item['Común'] || item['común'] || item['comun'] || '';
     const tr = document.createElement('tr');
     tr.className = 'main-row';
-    tr.innerHTML = `<td>${item['Recurso'] || ''}</td><td><a class="link-especie" onclick="abrirFicha('${c}')">${item['Nombre común'] || c}</a></td><td>${item['Especie'] || ''}</td><td>${item['Litoral'] || ''}</td>`;
+    // Escapamos la cadena c para evitar errores de sintaxis en el onclick
+    const cEscaped = c.replace(/'/g, "\\'");
+    tr.innerHTML = `<td>${item['Recurso'] || ''}</td><td><a class="link-especie" onclick="abrirFicha('${cEscaped}')">${item['Nombre común'] || c}</a></td><td>${item['Especie'] || ''}</td><td>${item['Litoral'] || ''}</td>`;
     tbody.appendChild(tr);
   });
 }
 
 function initMap() {
+  if(map) map.remove();
   map = L.map('map').setView([23.63, -102.55], 5);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
   markerCluster = L.markerClusterGroup();
