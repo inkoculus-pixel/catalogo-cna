@@ -229,12 +229,12 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border);}
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v3.1</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v3.2</span></h2>
 </header>
 
 <div id="loader">
   <div class="spinner"></div>
-  <p>Conectando a la base de datos de la RNIIPA...</p>
+  <p>Cargando base de datos...</p>
 </div>
 
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
@@ -292,12 +292,9 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border);}
 /**
  * HISTORIAL DE CAMBIOS (RNIIPA)
  * -------------------------------------------------------------------------
- * v3.1 - 2026-06-08:
- * - Migración completa a arquitectura serverless con Supabase (PostgreSQL).
- * - Optimización de carga dinámica de registros estadísticos e información de fichas.
- * - Implementación estricta de tipografía Noto Sans y limpieza de fondos a blanco sólido (#ffffff).
- * - Ajuste de la paleta institucional (#611232) y uso de azul (#33508d) en elementos interactivos.
- * - Preparación de la estructura HTML para su despliegue en acuatinta.info.
+ * v3.2 - 2026-06-08:
+ * - Optimización de sincronización inicial en paralelo con Promise.all.
+ * - Ajuste de mensaje visual ("Cargando base de datos...").
  */
 
 const supabaseUrl = 'https://fhhocpfjwyhowrhrrqmh.supabase.co';
@@ -316,22 +313,30 @@ async function sincronizarBaseDatos() {
   try {
     document.getElementById('loader').style.display = 'block';
 
-    const { data: resIndice, error: errIndice } = await supabase.from('indice').select('*');
-    if (errIndice) throw errIndice;
-    datosIndice = resIndice || [];
+    // Lanzar ambas peticiones a la base de datos AL MISMO TIEMPO
+    const [peticionIndice, peticionCoord] = await Promise.all([
+      supabase.from('indice').select('*'),
+      supabase.from('coordenadas').select('*')
+    ]);
+    
+    // Verificar si alguna de las dos falló
+    if (peticionIndice.error) throw peticionIndice.error;
+    if (peticionCoord.error) throw peticionCoord.error;
 
-    const { data: resCoord, error: errCoord } = await supabase.from('coordenadas').select('*');
-    if (errCoord) throw errCoord;
-    datosCoordenadas = resCoord || [];
+    // Asignar los datos
+    datosIndice = peticionIndice.data || [];
+    datosCoordenadas = peticionCoord.data || [];
 
+    // Ocultar loader y mostrar la interfaz web
     document.getElementById('loader').style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'flex';
     
+    // Ejecutar renderizados iniciales
     renderTabla(datosIndice);
     initMap();
 
   } catch (error) {
-    document.getElementById('loader').innerHTML = `<p style="color:var(--primary); font-weight:600;">Error al conectar con la base de datos de la RNIIPA.</p>`;
+    document.getElementById('loader').innerHTML = `<p style="color:var(--primary); font-weight:600;">Error al conectar con la base de datos.</p>`;
     console.error("Detalle del error:", error);
   }
 }
