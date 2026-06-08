@@ -112,7 +112,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border); font-
 
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v3.3</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v3.4</span></h2>
 </header>
 
 <div id="loader">
@@ -295,18 +295,27 @@ function matchesFiltro(obj, input) {
 }
 
 function filtrarDashboardGlobal() {
-  const input = document.getElementById("search-esp").value.toLowerCase().trim();
+  const inputEl = document.getElementById("search-esp");
+  if (!inputEl) return;
+  const input = inputEl.value.toLowerCase().trim();
   
   const mapTitleText = document.querySelector("#map-title .titulo-dinamico-filtro");
   const chartTitleText = document.querySelector("#chart-title .titulo-dinamico-filtro");
   
-  if (input) {
-      mapTitleText.innerText = `- Filtro: "${input}"`;
-      chartTitleText.innerText = `- Filtro: "${input}"`;
-  } else {
+  // BLOQUE DE REINICIO EXPLÍCITO: Soluciona el problema de que se quede "trabado" al borrar todo
+  if (input === "") {
       mapTitleText.innerText = `(Global)`;
       chartTitleText.innerText = `(Global)`;
+      
+      renderTabla(datosIndice);
+      const todosComunes = datosIndice.map(item => item['Común']).filter(Boolean);
+      renderMarcadoresGlobales(todosComunes, "");
+      actualizarGraficaConsolidada(todosComunes, "");
+      return;
   }
+
+  mapTitleText.innerText = `- Filtro: "${input}"`;
+  chartTitleText.innerText = `- Filtro: "${input}"`;
 
   const comunesQueHacenMatch = new Set();
 
@@ -322,7 +331,7 @@ function filtrarDashboardGlobal() {
 
   renderTabla(itemsReales);
   
-  const comunesActivos = itemsReales.map(item => item['Común']).filter(c => c);
+  const comunesActivos = itemsReales.map(item => item['Común']).filter(Boolean);
   
   renderMarcadoresGlobales(comunesActivos, input);
   actualizarGraficaConsolidada(comunesActivos, input);
@@ -346,12 +355,8 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
       const comunUPA = upa['Común'] || '';
       if (!comunesValidos.includes(comunUPA)) return;
 
-      // FILTRADO GEOGRÁFICO DE ALTA PRECISIÓN PARA EL MAPA
       if (input) {
-        // Obtenemos los textos de la fila de coordenadas
         const rowValues = Object.values(upa).filter(Boolean).join(' ').toLowerCase();
-        
-        // Obtenemos los textos puramente biológicos del índice para esta especie
         const indiceRow = datosIndice.find(i => i['Común'] === comunUPA) || {};
         const bioValues = [
           indiceRow['Recurso'], 
@@ -362,8 +367,6 @@ function renderMarcadoresGlobales(comunesValidos, input = '') {
           indiceRow['Grupo']
         ].filter(Boolean).join(' ').toLowerCase();
 
-        // Si el usuario buscó un estado (ej. "Baja") y la UPA no está ahí, 
-        // y la palabra tampoco es un término biológico (ej. "Peces"), la saltamos.
         if (!rowValues.includes(input) && !bioValues.includes(input)) { 
             return; 
         }
@@ -419,7 +422,6 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
   const datosFiltrados = datosCaptura.filter(item => {
     if (!comunesValidos.includes(item['Común'])) return false;
     
-    // FILTRADO GEOGRÁFICO DE ALTA PRECISIÓN PARA LA GRÁFICA
     if (input) {
       const rowValues = Object.values(item).filter(Boolean).join(' ').toLowerCase();
       const indiceRow = datosIndice.find(i => i['Común'] === item['Común']) || {};
@@ -432,7 +434,6 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
           indiceRow['Grupo']
       ].filter(Boolean).join(' ').toLowerCase();
 
-      // Similar al mapa, filtramos datos de captura que no coincidan con la región
       if (!rowValues.includes(input) && !bioValues.includes(input)) { 
           return false; 
       }
@@ -458,7 +459,6 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
       const ku = k.toUpperCase().trim();
       return ku === 'AÑO' || ku === 'ANIO' || ku === 'ANO';
     });
-    
     const entidadKey = keys.find(k => k.toUpperCase().includes('ENTIDAD'));
     const pesoKey = keys.find(k => k.toUpperCase().includes('PESO'));
 
@@ -533,7 +533,13 @@ function actualizarGraficaConsolidada(comunesValidos, input = '') {
         }
       },
       plugins: {
-        legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11, family: 'Noto Sans' }, color: '#161a1d' } },
+        legend: { 
+          display: true, 
+          position: 'bottom', 
+          // DESACTIVAMOS LA FUNCIÓN DE TACHAR AL HACER CLIC
+          onClick: (e) => {}, 
+          labels: { boxWidth: 12, font: { size: 11, family: 'Noto Sans' }, color: '#161a1d' } 
+        },
         tooltip: { callbacks: { label: function(context) { return context.dataset.label + ': ' + context.parsed.y.toLocaleString('en-US') + ' KG'; } } }
       }
     }
@@ -733,6 +739,8 @@ function abrirFicha(valorComun) {
               responsive: true,
               maintainAspectRatio: false,
               plugins: {
+                // DESACTIVAMOS LA FUNCIÓN DE TACHAR EN LA GRÁFICA DE LA FICHA TÉCNICA
+                legend: { onClick: (e) => {} }, 
                 tooltip: { callbacks: { label: function(context) { return context.parsed.y.toLocaleString('en-US') + ' KG'; } } }
               }
             }
