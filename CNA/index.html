@@ -42,65 +42,104 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
 .link-especie{color:var(--primary-blue);font-weight:700;cursor:pointer}
 .tab-content{display:none;padding:30px 5% 40px 5%;max-width:1600px;margin:0 auto}
 .btn-back{background:var(--bg);border:1px solid var(--border);padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:600}
+
+/* MODAL DE CONTRASEÑA */
+#auth-modal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 47, 42, 0.92);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+.auth-card {
+  background: #ffffff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  border-top: 6px solid var(--primary);
+}
+.auth-card h3 {
+  color: var(--gob-green);
+  font-size: 20px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+.auth-card p {
+  color: var(--text2);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.auth-card input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 16px;
+  margin-bottom: 16px;
+  text-align: center;
+  font-family: 'Noto Sans', sans-serif;
+}
+.auth-card input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.auth-card button {
+  width: 100%;
+  padding: 14px;
+  background: var(--gob-green);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.auth-card button:hover {
+  background: var(--primary);
+}
+#auth-error {
+  color: var(--primary);
+  font-size: 13px;
+  margin-top: 12px;
+  font-weight: 600;
+  display: none;
+}
 </style>
 </head>
 <body>
+
+<div id="auth-modal">
+  <div class="auth-card">
+    <h3>Acceso Restringido</h3>
+    <p>Ingrese la contraseña institucional para visualizar el catálogo.</p>
+    <input type="password" id="input-password" placeholder="Contraseña" onkeydown="if(event.key === 'Enter') verificarPassword()">
+    <button onclick="verificarPassword()">Ingresar</button>
+    <div id="auth-error">Contraseña incorrecta. Intente de nuevo.</div>
+  </div>
+</div>
 
 <div class="gobmx-topbar"><img src="https://framework-gb.cdn.gob.mx/landing/img/logoheader.svg" alt="Gobierno de México"></div>
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
   <h2>Catálogo de recursos <span class="version-badge">v3.6</span></h2>
 </header>
-
-<div id="loader">
-  <div class="spinner"></div>
-  <p>Cargando base de datos...</p>
-</div>
-
+<div id="loader"><div class="spinner"></div><p>Cargando base de datos...</p></div>
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
-  <div class="filter-section">
-    <div class="filter-bar">
-      <input type="text" id="search-esp" placeholder="Buscar..." onkeyup="filtrarDashboardGlobal()">
-    </div>
-  </div>
-  
+  <div class="filter-section"><div class="filter-bar"><input type="text" id="search-esp" placeholder="Buscar..." onkeyup="filtrarDashboardGlobal()"></div></div>
   <div class="map-chart-section">
-    <div class="map-card">
-      <h3 id="map-title">Distribución Geográfica <span class="titulo-dinamico-filtro">(Global)</span></h3>
-      <div id="map-empty-overlay">Sin registros</div>
-      <div id="map"></div>
-    </div>
-    
-    <div class="chart-wrap">
-      <h3 id="chart-title">Aviso Estadístico</h3>
-      <div class="chart-container-box" id="global-chart-wrapper" style="padding:20px;">
-        <p style="color:var(--text2); text-align:center;">Seleccione una especie.</p>
-      </div>
-    </div>
+    <div class="map-card"><h3 id="map-title">Distribución Geográfica <span class="titulo-dinamico-filtro">(Global)</span></h3><div id="map-empty-overlay">Sin registros</div><div id="map"></div></div>
+    <div class="chart-wrap"><h3 id="chart-title">Aviso Estadístico</h3><div class="chart-container-box" id="global-chart-wrapper" style="padding:20px;"><p style="color:var(--text2); text-align:center;">Seleccione una especie.</p></div></div>
   </div>
-
-  <div class="table-section">
-    <div class="table-wrap">
-      <table id="tabla-recursos">
-        <thead>
-          <tr>
-            <th>Recurso</th>
-            <th>Nombre común</th>
-            <th>Especie</th>
-            <th>Litoral</th>
-          </tr>
-        </thead>
-        <tbody id="esp-tbody"></tbody>
-      </table>
-    </div>
-  </div>
+  <div class="table-section"><div class="table-wrap"><table id="tabla-recursos"><thead><tr><th>Recurso</th><th>Nombre común</th><th>Especie</th><th>Litoral</th></tr></thead><tbody id="esp-tbody"></tbody></table></div></div>
 </div>
-
-<div id="tab-ficha" class="tab-content">
-  <button class="btn-back" onclick="cerrarFicha()">← Regresar</button>
-  <div id="ficha-container"></div>
-</div>
-
+<div id="tab-ficha" class="tab-content"><button class="btn-back" onclick="cerrarFicha()">← Regresar</button><div id="ficha-container"></div></div>
 <footer class="gobmx-footer"></footer>
 
 <script>
@@ -114,6 +153,32 @@ const supabase = window.supabaseClient;
 
 let datosIndice = [], datosCoordenadas = [], map, markerCluster;
 
+// --- CONTROL DE ACCESO POR CONTRASEÑA ---
+function verificarPassword() {
+  const pass = document.getElementById('input-password').value.trim();
+  const errorDiv = document.getElementById('auth-error');
+
+  if (pass === 'aqua3020') {
+    sessionStorage.setItem('rniipa_auth', 'true');
+    document.getElementById('auth-modal').style.display = 'none';
+    sincronizarBaseDatos();
+  } else {
+    errorDiv.style.display = 'block';
+    document.getElementById('input-password').value = '';
+  }
+}
+
+// Validar al cargar la página si ya se autenticó en esta sesión
+document.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('rniipa_auth') === 'true') {
+    document.getElementById('auth-modal').style.display = 'none';
+    sincronizarBaseDatos();
+  } else {
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('input-password').focus();
+  }
+});
+
 async function sincronizarBaseDatos() {
   try {
     document.getElementById('loader').style.display = 'block';
@@ -122,12 +187,9 @@ async function sincronizarBaseDatos() {
         supabase.from('coordenadas').select('*')
     ]);
     if (pRes.error || cRes.error) throw "Error de conexión";
-    datosIndice = pRes.data; 
-    datosCoordenadas = cRes.data;
-    
+    datosIndice = pRes.data; datosCoordenadas = cRes.data;
     document.getElementById('loader').style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'flex';
-    
     renderTabla(datosIndice);
     initMap();
   } catch (e) { 
@@ -178,8 +240,6 @@ function cerrarFicha() {
   document.getElementById('tab-ficha').style.display = 'none';
   document.getElementById('main-dashboard').style.display = 'flex';
 }
-
-document.addEventListener('DOMContentLoaded', sincronizarBaseDatos);
 </script>
 </body>
 </html>
