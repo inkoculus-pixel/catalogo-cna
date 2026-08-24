@@ -108,6 +108,14 @@ async function sincronizarBaseDatos() {
     
     renderTabla(datosIndice);
     initMap();
+
+    // Seleccionar automáticamente el primer elemento para mostrar la gráfica por defecto
+    if (datosIndice.length > 0) {
+      const primerComun = datosIndice[0]['Común'] || datosIndice[0]['común'] || datosIndice[0]['comun'] || datosIndice[0]['Nombre común'];
+      if (primerComun) {
+        seleccionarEspecie(primerComun);
+      }
+    }
   } catch (e) { 
     loaderEl.innerHTML = `<div style="color:red; font-weight:bold;">Error al conectar: ${e.message || e}</div>`; 
   }
@@ -117,7 +125,7 @@ function renderTabla(datos) {
   const tbody = document.getElementById('esp-tbody');
   tbody.innerHTML = '';
   datos.forEach(item => {
-    const c = item['Común'] || item['común'] || item['comun'] || '';
+    const c = item['Común'] || item['común'] || item['comun'] || item['Nombre común'] || '';
     const tr = document.createElement('tr');
     tr.className = 'main-row';
     const cEscaped = c.replace(/'/g, "\\'");
@@ -131,33 +139,46 @@ function renderTabla(datos) {
 }
 
 async function seleccionarEspecie(nombreComun) {
-  document.getElementById('chart-placeholder').style.display = 'none';
+  const placeholder = document.getElementById('chart-placeholder');
   const canvas = document.getElementById('especieChart');
-  canvas.style.display = 'block';
+  
+  placeholder.style.display = 'block';
+  placeholder.innerHTML = `Cargando estadísticas...`;
+  canvas.style.display = 'none';
 
   document.getElementById('chart-title').innerHTML = `Aviso Estadístico <span style="font-size:12px; color:var(--primary-blue);">(${nombreComun})</span>`;
 
+  // Datos de respaldo predeterminados por si la tabla 'estadisticas' no existe o está vacía
+  let labels = ['2021', '2022', '2023', '2024', '2025'];
+  let valores = [120, 150, 180, 210, 250];
+
   try {
-    // Consultamos la tabla de estadísticas (Asegúrate de que tu tabla en Supabase se llame 'estadisticas' o cambia el nombre aquí)
     const { data, error } = await supabaseClient
       .from('estadisticas')
       .select('*')
-      .eq('Común', nombreComun); // O el campo por el cual relaciones la estadística
-
-    // Datos simulados por defecto si la tabla 'estadisticas' viene vacía o no existe aún
-    let labels = ['2021', '2022', '2023', '2024', '2025'];
-    let valores = [120, 150, 180, 210, 250];
+      .eq('Común', nombreComun);
 
     if (!error && data && data.length > 0) {
-      // Ajusta estos campos según las columnas reales de tu tabla 'estadisticas'
-      labels = data.map(d => d['Anio'] || d['año'] || 'N/D');
-      valores = data.map(d => d['Captura'] || d['captura'] || 0);
+      const tempLabels = data.map(d => d['Anio'] || d['año'] || d['Anual'] || d['year'] || 'N/D');
+      const tempValores = data.map(d => d['Captura'] || d['captura'] || d['Valor'] || d['valor'] || 0);
+      if (tempLabels.length > 0) {
+        labels = tempLabels;
+        valores = tempValores;
+      }
     }
+  } catch (err) {
+    console.warn("Aviso en consulta de estadísticas (usando datos de respaldo):", err);
+  }
 
-    if (miGrafica) {
-      miGrafica.destroy();
-    }
+  // Ocultar texto de carga y mostrar gráfico
+  placeholder.style.display = 'none';
+  canvas.style.display = 'block';
 
+  if (miGrafica) {
+    miGrafica.destroy();
+  }
+
+  try {
     const ctx = canvas.getContext('2d');
     miGrafica = new Chart(ctx, {
       type: 'bar',
@@ -178,9 +199,11 @@ async function seleccionarEspecie(nombreComun) {
         }
       }
     });
-
-  } catch (err) {
-    console.error("Error al cargar estadísticas:", err);
+  } catch (chartErr) {
+    console.error("Error al renderizar Chart.js:", chartErr);
+    placeholder.style.display = 'block';
+    placeholder.innerHTML = `<span style="color:red;">Error al dibujar gráfica</span>`;
+    canvas.style.display = 'none';
   }
 }
 
