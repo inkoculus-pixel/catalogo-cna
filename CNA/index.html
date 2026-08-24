@@ -131,7 +131,7 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
   <h2>Catálogo de recursos <span class="version-badge">v3.9</span></h2>
 </header>
-<div id="loader" style="display:none;"><div class="spinner"></div><p id="loader-text">Cargando base de datos...</p></div>
+<div id="loader"><div class="spinner"></div><p>Cargando base de datos...</p></div>
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
   <div class="filter-section"><div class="filter-bar"><input type="text" id="search-esp" placeholder="Buscar..." onkeyup="filtrarDashboardGlobal()"></div></div>
   <div class="map-chart-section">
@@ -144,24 +144,21 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
 <footer class="gobmx-footer"></footer>
 
 <script>
-let supabaseClient = null;
-
-function inicializarSupabase() {
-  if (!supabaseClient && window.supabase) {
-    supabaseClient = window.supabase.createClient(
-      'https://fhhocpfjwyhowrhrrqmh.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo'
-    );
-  }
-  return supabaseClient;
+if (!window.supabaseClient) {
+  window.supabaseClient = supabase.createClient(
+    'https://fhhocpfjwyhowrhrrqmh.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo'
+  );
 }
+const supabase = window.supabaseClient;
 
 let datosIndice = [], datosCoordenadas = [], map, markerCluster;
 
-// --- CONTROL DE ACCESO POR CONTRASEÑA ---
 function verificarPassword() {
   const pass = document.getElementById('input-password').value.trim();
   const errorDiv = document.getElementById('auth-error');
+
+  console.log("Verificando contraseña..."); // Rastro en consola
 
   if (pass === 'aqua3020') {
     sessionStorage.setItem('rniipa_auth', 'true');
@@ -173,45 +170,46 @@ function verificarPassword() {
   }
 }
 
-// Validar al cargar la página si ya se autenticó
 document.addEventListener('DOMContentLoaded', () => {
   if (sessionStorage.getItem('rniipa_auth') === 'true') {
     document.getElementById('auth-modal').style.display = 'none';
     sincronizarBaseDatos();
   } else {
+    document.getElementById('loader').style.display = 'none';
     document.getElementById('input-password').focus();
   }
 });
 
 async function sincronizarBaseDatos() {
-  const client = inicializarSupabase();
-  if (!client) {
-    alert("Error crítico: No se pudo cargar el cliente de Supabase.");
-    return;
-  }
-
   try {
     document.getElementById('loader').style.display = 'block';
-    
+    console.log("Iniciando descarga desde Supabase...");
+
     const [pRes, cRes] = await Promise.all([
-        client.from('indice').select('*'), 
-        client.from('coordenadas').select('*')
+        supabase.from('indice').select('*'), 
+        supabase.from('coordenadas').select('*')
     ]);
 
-    if (pRes.error) throw "Error en tabla índice: " + pRes.error.message;
-    if (cRes.error) throw "Error en tabla coordenadas: " + cRes.error.message;
+    if (pRes.error) {
+      console.error("Error en tabla 'indice':", pRes.error);
+      throw "Error en tabla 'indice': " + pRes.error.message;
+    }
+    if (cRes.error) {
+      console.error("Error en tabla 'coordenadas':", cRes.error);
+      throw "Error en tabla 'coordenadas': " + cRes.error.message;
+    }
 
     datosIndice = pRes.data || []; 
     datosCoordenadas = cRes.data || [];
-
+    
     document.getElementById('loader').style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'flex';
     
     renderTabla(datosIndice);
     initMap();
   } catch (e) { 
-    document.getElementById('loader').innerHTML = `<p style="color:red; font-weight:bold;">Error al conectar: ${e}</p>`; 
-    console.error(e);
+    console.error("Fallo general en sincronizarBaseDatos:", e);
+    document.getElementById('loader').innerHTML = `<p style="color:red; font-weight:bold; padding:20px;">Error al conectar: ${e}</p><p style="font-size:13px; color:#666;">Verifica la consola (F12) para más detalles de Supabase.</p>`; 
   }
 }
 
@@ -246,11 +244,10 @@ function filtrarDashboardGlobal() {
 }
 
 async function abrirFicha(c) {
-  const client = inicializarSupabase();
   document.getElementById('main-dashboard').style.display = 'none';
   document.getElementById('tab-ficha').style.display = 'block';
   document.getElementById('ficha-container').innerHTML = 'Cargando detalles...';
-  const { data: f } = await client.from('fichas').select('*');
+  const { data: f } = await supabase.from('fichas').select('*');
   const ficha = (f || []).find(x => (x['Común'] || x['común'] || x['comun']) === c) || {};
   document.getElementById('ficha-container').innerHTML = `<h1>${c}</h1><p>${ficha['Distribución geográfica'] || 'Sin datos'}</p>`;
 }
