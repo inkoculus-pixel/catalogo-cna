@@ -129,9 +129,9 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
 <div class="gobmx-topbar"><img src="https://framework-gb.cdn.gob.mx/landing/img/logoheader.svg" alt="Gobierno de México"></div>
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v3.9</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v4.0</span></h2>
 </header>
-<div id="loader"><div class="spinner"></div><p>Cargando base de datos...</p></div>
+<div id="loader" style="display:none;"><div class="spinner"></div><p id="loader-text">Cargando base de datos...</p></div>
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
   <div class="filter-section"><div class="filter-bar"><input type="text" id="search-esp" placeholder="Buscar..." onkeyup="filtrarDashboardGlobal()"></div></div>
   <div class="map-chart-section">
@@ -144,21 +144,23 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
 <footer class="gobmx-footer"></footer>
 
 <script>
-if (!window.supabaseClient) {
-  window.supabaseClient = supabase.createClient(
-    'https://fhhocpfjwyhowrhrrqmh.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo'
-  );
+let supabaseClient = null;
+
+function inicializarSupabase() {
+  if (!supabaseClient && window.supabase) {
+    supabaseClient = window.supabase.createClient(
+      'https://fhhocpfjwyhowrhrrqmh.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo'
+    );
+  }
+  return supabaseClient;
 }
-const supabase = window.supabaseClient;
 
 let datosIndice = [], datosCoordenadas = [], map, markerCluster;
 
 function verificarPassword() {
   const pass = document.getElementById('input-password').value.trim();
   const errorDiv = document.getElementById('auth-error');
-
-  console.log("Verificando contraseña..."); // Rastro en consola
 
   if (pass === 'aqua3020') {
     sessionStorage.setItem('rniipa_auth', 'true');
@@ -175,41 +177,45 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('auth-modal').style.display = 'none';
     sincronizarBaseDatos();
   } else {
-    document.getElementById('loader').style.display = 'none';
     document.getElementById('input-password').focus();
   }
 });
 
 async function sincronizarBaseDatos() {
+  const client = inicializarSupabase();
+  if (!client) {
+    console.error("Supabase no inicializado");
+    return;
+  }
+
   try {
     document.getElementById('loader').style.display = 'block';
-    console.log("Iniciando descarga desde Supabase...");
-
+    
     const [pRes, cRes] = await Promise.all([
-        supabase.from('indice').select('*'), 
-        supabase.from('coordenadas').select('*')
+        client.from('indice').select('*'), 
+        client.from('coordenadas').select('*')
     ]);
 
-    if (pRes.error) {
-      console.error("Error en tabla 'indice':", pRes.error);
-      throw "Error en tabla 'indice': " + pRes.error.message;
-    }
-    if (cRes.error) {
-      console.error("Error en tabla 'coordenadas':", cRes.error);
-      throw "Error en tabla 'coordenadas': " + cRes.error.message;
-    }
+    if (pRes.error) throw new Error("Índice: " + pRes.error.message);
+    if (cRes.error) throw new Error("Coordenadas: " + cRes.error.message);
 
     datosIndice = pRes.data || []; 
     datosCoordenadas = cRes.data || [];
-    
+
     document.getElementById('loader').style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'flex';
     
     renderTabla(datosIndice);
-    initMap();
+    
+    // Retraso seguro para que Leaflet calcule el tamaño del mapa en el contenedor flex
+    setTimeout(() => {
+      initMap();
+    }, 100);
+
   } catch (e) { 
-    console.error("Fallo general en sincronizarBaseDatos:", e);
-    document.getElementById('loader').innerHTML = `<p style="color:red; font-weight:bold; padding:20px;">Error al conectar: ${e}</p><p style="font-size:13px; color:#666;">Verifica la consola (F12) para más detalles de Supabase.</p>`; 
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('loader').innerHTML = `<p style="color:red; font-weight:bold; padding:20px;">Error al conectar: ${e.message}</p>`; 
+    console.error("Detalle del error:", e);
   }
 }
 
@@ -227,15 +233,26 @@ function renderTabla(datos) {
 }
 
 function initMap() {
-  if(map) map.remove();
-  map = L.map('map').setView([23.63, -102.55], 5);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
-  markerCluster = L.markerClusterGroup();
-  map.addLayer(markerCluster);
-  datosCoordenadas.forEach(upa => {
-    const lat = parseFloat(upa['Latitud'] || upa['latitud']), lng = parseFloat(upa['Longitud'] || upa['longitud']);
-    if(!isNaN(lat)) L.marker([lat, lng]).addTo(markerCluster).bindPopup(upa['nombre_upa'] || 'Unidad');
-  });
+  try {
+    if(map) {
+      map.remove();
+      map = null;
+    }
+    map = L.map('map').setView([23.63, -102.55], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+    markerCluster = L.markerClusterGroup();
+    map.addLayer(markerCluster);
+    
+    datosCoordenadas.forEach(upa => {
+      const lat = parseFloat(upa['Latitud'] || upa['latitud']), lng = parseFloat(upa['Longitud'] || upa['longitud']);
+      if(!isNaN(lat) && !isNaN(lng)) {
+        L.marker([lat, lng]).addTo(markerCluster).bindPopup(upa['nombre_upa'] || 'Unidad');
+      }
+    });
+    map.invalidateSize();
+  } catch(err) {
+    console.error("Error inicializando el mapa:", err);
+  }
 }
 
 function filtrarDashboardGlobal() {
@@ -244,17 +261,23 @@ function filtrarDashboardGlobal() {
 }
 
 async function abrirFicha(c) {
+  const client = inicializarSupabase();
   document.getElementById('main-dashboard').style.display = 'none';
   document.getElementById('tab-ficha').style.display = 'block';
   document.getElementById('ficha-container').innerHTML = 'Cargando detalles...';
-  const { data: f } = await supabase.from('fichas').select('*');
-  const ficha = (f || []).find(x => (x['Común'] || x['común'] || x['comun']) === c) || {};
-  document.getElementById('ficha-container').innerHTML = `<h1>${c}</h1><p>${ficha['Distribución geográfica'] || 'Sin datos'}</p>`;
+  try {
+    const { data: f } = await client.from('fichas').select('*');
+    const ficha = (f || []).find(x => (x['Común'] || x['común'] || x['comun']) === c) || {};
+    document.getElementById('ficha-container').innerHTML = `<h1>${c}</h1><p>${ficha['Distribución geográfica'] || 'Sin datos'}</p>`;
+  } catch(err) {
+    document.getElementById('ficha-container').innerHTML = `<p style="color:red;">Error al cargar los detalles.</p>`;
+  }
 }
 
 function cerrarFicha() {
   document.getElementById('tab-ficha').style.display = 'none';
   document.getElementById('main-dashboard').style.display = 'flex';
+  setTimeout(() => { if(map) map.invalidateSize(); }, 50);
 }
 </script>
 </body>
