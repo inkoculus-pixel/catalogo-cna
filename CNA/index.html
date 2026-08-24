@@ -29,7 +29,7 @@ body{font-family:'Noto Sans', sans-serif; background:var(--bg); color:var(--text
 .spinner{border:4px solid rgba(0,0,0,.1);width:40px;height:40px;border-radius:50%;border-left-color:var(--primary);animation:spin 1s linear infinite;margin:0 auto 15px}
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 .map-card,.chart-wrap{background:var(--bg);border-radius:8px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden;position:relative;display:flex;flex-direction:column}
-.map-card h3,.chart-wrap h3{padding:16px 20px;background:#f8f9fa;border-bottom:1px solid var(--border);font-size:14px;color:var(--gob-green);text-transform:uppercase;letter-spacing:0.5px;display:flex;justify-content:space-between;align-items:center;}
+.map-card h3,.chart-wrap h3{padding:16px 20px;background:#f8f9fa;border-bottom:1px solid var(--border);font-size:14px;color:var(--gob-green);text-transform:uppercase;letter-spacing:0.5px}
 #map{height:400px;width:100%}
 #map-empty-overlay{display:none;position:absolute;top:50px;left:0;right:0;bottom:0;background:rgba(255,255,255,0.85);z-index:10;justify-content:center;align-items:center;color:var(--primary);font-weight:600}
 .filter-bar input{padding:16px 20px;border:1px solid var(--border);border-radius:8px;font-size:15px;width:100%;font-family:'Noto Sans', sans-serif}
@@ -40,7 +40,6 @@ th{padding:14px 16px;text-align:left;font-size:13px;text-transform:uppercase}
 td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
 .main-row:hover{background:#fafafa;cursor:pointer}
 .link-especie{color:var(--primary-blue);font-weight:700;cursor:pointer}
-.btn-reset-chart{font-size:11px; background:var(--gob-green); color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;}
 .tab-content{display:none;padding:30px 5% 40px 5%;max-width:1600px;margin:0 auto}
 .btn-back{background:var(--bg);border:1px solid var(--border);padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:600}
 </style>
@@ -51,73 +50,44 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
   <h2>Catálogo de recursos <span class="version-badge">v3.5</span></h2>
 </header>
-<div id="loader">
-  <div class="spinner"></div>
-  <p>Cargando base de datos...</p>
-</div>
+<div id="loader"><div class="spinner"></div><p>Cargando base de datos...</p></div>
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
   <div class="filter-section"><div class="filter-bar"><input type="text" id="search-esp" placeholder="Buscar..." onkeyup="filtrarDashboardGlobal()"></div></div>
   <div class="map-chart-section">
     <div class="map-card"><h3 id="map-title">Distribución Geográfica <span class="titulo-dinamico-filtro">(Global)</span></h3><div id="map-empty-overlay">Sin registros</div><div id="map"></div></div>
-    <div class="chart-wrap">
-      <h3 id="chart-title">
-        <span>Aviso Estadístico (Global)</span>
-        <button class="btn-reset-chart" onclick="cargarEstadisticaGlobal()">Ver Todo</button>
-      </h3>
-      <div class="chart-container-box" id="global-chart-wrapper" style="padding:20px; position: relative; height: 320px;">
-        <p id="chart-placeholder" style="color:var(--text2); text-align:center; padding-top: 100px;">Cargando estadísticas...</p>
-        <canvas id="especieChart" style="display: none;"></canvas>
-      </div>
-    </div>
+    <div class="chart-wrap"><h3 id="chart-title">Aviso Estadístico</h3><div class="chart-container-box" id="global-chart-wrapper" style="padding:20px;"><p style="color:var(--text2); text-align:center;">Seleccione una especie.</p></div></div>
   </div>
   <div class="table-section"><div class="table-wrap"><table id="tabla-recursos"><thead><tr><th>Recurso</th><th>Nombre común</th><th>Especie</th><th>Litoral</th></tr></thead><tbody id="esp-tbody"></tbody></table></div></div>
 </div>
 <div id="tab-ficha" class="tab-content"><button class="btn-back" onclick="cerrarFicha()">← Regresar</button><div id="ficha-container"></div></div>
 <footer class="gobmx-footer"></footer>
-
 <script>
-let supabaseClient = null;
-try {
-  if (typeof supabase !== 'undefined') {
-    supabaseClient = supabase.createClient(
-      'https://fhhocpfjwyhowrhrrqmh.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo'
-    );
-  }
-} catch (err) {
-  console.error("Error al inicializar cliente Supabase:", err);
+// --- INICIALIZACIÓN SEGURA ---
+if (!window.supabaseClient) {
+  window.supabaseClient = supabase.createClient(
+    'https://fhhocpfjwyhowrhrrqmh.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo'
+  );
 }
+const supabase = window.supabaseClient;
 
-let datosIndice = [], datosCoordenadas = [], map, markerCluster, miGrafica = null;
+let datosIndice = [], datosCoordenadas = [], map, markerCluster;
 
 async function sincronizarBaseDatos() {
-  const loaderEl = document.getElementById('loader');
   try {
-    if (!supabaseClient) throw new Error("No se pudo cargar la librería de Supabase.");
-    loaderEl.style.display = 'block';
-    
+    document.getElementById('loader').style.display = 'block';
     const [pRes, cRes] = await Promise.all([
-        supabaseClient.from('indice').select('*'), 
-        supabaseClient.from('coordenadas').select('*')
+        supabase.from('indice').select('*'), 
+        supabase.from('coordenadas').select('*')
     ]);
-
-    if (pRes.error) throw new Error("Tabla 'indice': " + pRes.error.message);
-    if (cRes.error) throw new Error("Tabla 'coordenadas': " + cRes.error.message);
-
-    datosIndice = pRes.data || []; 
-    datosCoordenadas = cRes.data || [];
-
-    loaderEl.style.display = 'none';
+    if (pRes.error || cRes.error) throw "Error de conexión";
+    datosIndice = pRes.data; datosCoordenadas = cRes.data;
+    document.getElementById('loader').style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'flex';
-    
     renderTabla(datosIndice);
     initMap();
-
-    // Cargar la estadística global de TODO el catálogo por defecto
-    cargarEstadisticaGlobal();
-
   } catch (e) { 
-    loaderEl.innerHTML = `<div style="color:red; font-weight:bold;">Error al conectar: ${e.message || e}</div>`; 
+    document.getElementById('loader').innerHTML = `<p style="color:red">Error al conectar: ${e}</p>`; 
   }
 }
 
@@ -125,141 +95,12 @@ function renderTabla(datos) {
   const tbody = document.getElementById('esp-tbody');
   tbody.innerHTML = '';
   datos.forEach(item => {
-    const c = item['Común'] || item['común'] || item['comun'] || item['Nombre común'] || '';
+    const c = item['Común'] || item['común'] || item['comun'] || '';
     const tr = document.createElement('tr');
     tr.className = 'main-row';
     const cEscaped = c.replace(/'/g, "\\'");
-    
-    // Al hacer clic en la fila se filtra la estadística para esa especie en particular
-    tr.onclick = () => seleccionarEspecie(c);
-
-    tr.innerHTML = `<td>${item['Recurso'] || ''}</td><td><a class="link-especie" onclick="event.stopPropagation(); abrirFicha('${cEscaped}')">${item['Nombre común'] || c}</a></td><td>${item['Especie'] || ''}</td><td>${item['Litoral'] || ''}</td>`;
+    tr.innerHTML = `<td>${item['Recurso'] || ''}</td><td><a class="link-especie" onclick="abrirFicha('${cEscaped}')">${item['Nombre común'] || c}</a></td><td>${item['Especie'] || ''}</td><td>${item['Litoral'] || ''}</td>`;
     tbody.appendChild(tr);
-  });
-}
-
-// Función para mostrar el acumulado de TODAS las especies (Global)
-async function cargarEstadisticaGlobal() {
-  const placeholder = document.getElementById('chart-placeholder');
-  const canvas = document.getElementById('especieChart');
-  
-  placeholder.style.display = 'block';
-  placeholder.innerHTML = `Cargando estadística global...`;
-  canvas.style.display = 'none';
-
-  document.getElementById('chart-title').innerHTML = `
-    <span>Aviso Estadístico <span style="font-size:12px; color:var(--primary-blue);">(Global - Todo)</span></span>
-    <button class="btn-reset-chart" onclick="cargarEstadisticaGlobal()">Ver Todo</button>
-  `;
-
-  let labels = ['2021', '2022', '2023', '2024', '2025'];
-  let valores = [500, 620, 780, 850, 960];
-
-  try {
-    const { data, error } = await supabaseClient
-      .from('estadisticas')
-      .select('*');
-
-    if (!error && data && data.length > 0) {
-      const aniosMap = {};
-      data.forEach(d => {
-        const anio = String(d['Anio'] || d['año'] || d['Anual'] || d['year'] || 'N/D');
-        const cap = parseFloat(d['Captura'] || d['captura'] || d['Valor'] || d['valor'] || 0);
-        aniosMap[anio] = (aniosMap[anio] || 0) + cap;
-      });
-
-      const sortedKeys = Object.keys(aniosMap).sort();
-      if (sortedKeys.length > 0) {
-        labels = sortedKeys;
-        valores = sortedKeys.map(k => aniosMap[k]);
-      }
-    }
-  } catch (err) {
-    console.warn("Aviso en consulta global (usando respaldo):", err);
-  }
-
-  placeholder.style.display = 'none';
-  canvas.style.display = 'block';
-
-  if (miGrafica) miGrafica.destroy();
-
-  const ctx = canvas.getContext('2d');
-  miGrafica = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Producción Total / Captura Global (Toneladas)',
-        data: valores,
-        backgroundColor: '#002f2a',
-        borderRadius: 4
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } }
-    }
-  });
-}
-
-// Función cuando seleccionan una especie en particular de la tabla
-async function seleccionarEspecie(nombreComun) {
-  const placeholder = document.getElementById('chart-placeholder');
-  const canvas = document.getElementById('especieChart');
-  
-  placeholder.style.display = 'block';
-  placeholder.innerHTML = `Cargando estadísticas de ${nombreComun}...`;
-  canvas.style.display = 'none';
-
-  document.getElementById('chart-title').innerHTML = `
-    <span>Aviso Estadístico <span style="font-size:12px; color:var(--primary-blue);">(${nombreComun})</span></span>
-    <button class="btn-reset-chart" onclick="cargarEstadisticaGlobal()">Ver Todo</button>
-  `;
-
-  let labels = ['2021', '2022', '2023', '2024', '2025'];
-  let valores = [120, 150, 180, 210, 250];
-
-  try {
-    const { data, error } = await supabaseClient
-      .from('estadisticas')
-      .select('*')
-      .eq('Común', nombreComun);
-
-    if (!error && data && data.length > 0) {
-      const tempLabels = data.map(d => d['Anio'] || d['año'] || d['Anual'] || d['year'] || 'N/D');
-      const tempValores = data.map(d => d['Captura'] || d['captura'] || d['Valor'] || d['valor'] || 0);
-      if (tempLabels.length > 0) {
-        labels = tempLabels;
-        valores = tempValores;
-      }
-    }
-  } catch (err) {
-    console.warn("Aviso en consulta individual:", err);
-  }
-
-  placeholder.style.display = 'none';
-  canvas.style.display = 'block';
-
-  if (miGrafica) miGrafica.destroy();
-
-  const ctx = canvas.getContext('2d');
-  miGrafica = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Producción / Captura (Toneladas)',
-        data: valores,
-        backgroundColor: '#33508d',
-        borderRadius: 4
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } }
-    }
   });
 }
 
@@ -284,8 +125,8 @@ async function abrirFicha(c) {
   document.getElementById('main-dashboard').style.display = 'none';
   document.getElementById('tab-ficha').style.display = 'block';
   document.getElementById('ficha-container').innerHTML = 'Cargando detalles...';
-  const { data: f } = await supabaseClient.from('fichas').select('*');
-  const ficha = (f || []).find(x => (x['Común'] || x['común'] || x['comun']) === c) || {};
+  const { data: f } = await supabase.from('fichas').select('*');
+  const ficha = f.find(x => (x['Común'] || x['común'] || x['comun']) === c) || {};
   document.getElementById('ficha-container').innerHTML = `<h1>${c}</h1><p>${ficha['Distribución geográfica'] || 'Sin datos'}</p>`;
 }
 
