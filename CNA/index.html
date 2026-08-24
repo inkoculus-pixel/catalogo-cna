@@ -45,109 +45,49 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
 </style>
 </head>
 <body>
-
 <div class="gobmx-topbar"><img src="https://framework-gb.cdn.gob.mx/landing/img/logoheader.svg" alt="Gobierno de México"></div>
 <header class="imipas-header">
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
-  <h2>Catálogo de recursos <span class="version-badge">v3.6.1</span></h2>
+  <h2>Catálogo de recursos <span class="version-badge">v3.5</span></h2>
 </header>
-
-<div id="loader">
-  <div class="spinner"></div>
-  <p id="loader-msg">Cargando base de datos...</p>
-</div>
-
+<div id="loader"><div class="spinner"></div><p>Cargando base de datos...</p></div>
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
-  <div class="filter-section">
-    <div class="filter-bar">
-      <input type="text" id="search-esp" placeholder="Buscar..." onkeyup="filtrarDashboardGlobal()">
-    </div>
-  </div>
-  
+  <div class="filter-section"><div class="filter-bar"><input type="text" id="search-esp" placeholder="Buscar..." onkeyup="filtrarDashboardGlobal()"></div></div>
   <div class="map-chart-section">
-    <div class="map-card">
-      <h3 id="map-title">Distribución Geográfica <span class="titulo-dinamico-filtro">(Global)</span></h3>
-      <div id="map-empty-overlay">Sin registros</div>
-      <div id="map"></div>
-    </div>
-    
-    <div class="chart-wrap">
-      <h3 id="chart-title">Aviso Estadístico</h3>
-      <div class="chart-container-box" id="global-chart-wrapper" style="padding:20px;">
-        <p style="color:var(--text2); text-align:center;">Seleccione una especie.</p>
-      </div>
-    </div>
+    <div class="map-card"><h3 id="map-title">Distribución Geográfica <span class="titulo-dinamico-filtro">(Global)</span></h3><div id="map-empty-overlay">Sin registros</div><div id="map"></div></div>
+    <div class="chart-wrap"><h3 id="chart-title">Aviso Estadístico</h3><div class="chart-container-box" id="global-chart-wrapper" style="padding:20px;"><p style="color:var(--text2); text-align:center;">Seleccione una especie.</p></div></div>
   </div>
-
-  <div class="table-section">
-    <div class="table-wrap">
-      <table id="tabla-recursos">
-        <thead>
-          <tr>
-            <th>Recurso</th>
-            <th>Nombre común</th>
-            <th>Especie</th>
-            <th>Litoral</th>
-          </tr>
-        </thead>
-        <tbody id="esp-tbody"></tbody>
-      </table>
-    </div>
-  </div>
+  <div class="table-section"><div class="table-wrap"><table id="tabla-recursos"><thead><tr><th>Recurso</th><th>Nombre común</th><th>Especie</th><th>Litoral</th></tr></thead><tbody id="esp-tbody"></tbody></table></div></div>
 </div>
-
-<div id="tab-ficha" class="tab-content">
-  <button class="btn-back" onclick="cerrarFicha()">← Regresar</button>
-  <div id="ficha-container"></div>
-</div>
-
+<div id="tab-ficha" class="tab-content"><button class="btn-back" onclick="cerrarFicha()">← Regresar</button><div id="ficha-container"></div></div>
 <footer class="gobmx-footer"></footer>
-
 <script>
-let supabase = null;
+// --- INICIALIZACIÓN SEGURA ---
+if (!window.supabaseClient) {
+  window.supabaseClient = supabase.createClient(
+    'https://fhhocpfjwyhowrhrrqmh.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo'
+  );
+}
+const supabase = window.supabaseClient;
+
 let datosIndice = [], datosCoordenadas = [], map, markerCluster;
 
 async function sincronizarBaseDatos() {
-  const loaderMsg = document.getElementById('loader-msg');
   try {
-    // Verificar si la librería de Supabase cargó correctamente
-    if (typeof window.supabase === 'undefined') {
-      throw new Error("La librería de Supabase no se pudo cargar desde el CDN.");
-    }
-
-    if (!supabase) {
-      supabase = window.supabase.createClient(
-        'https://fhhocpfjwyhowrhrrqmh.supabase.co',
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo'
-      );
-    }
-
-    loaderMsg.innerText = "Consultando tablas...";
-
+    document.getElementById('loader').style.display = 'block';
     const [pRes, cRes] = await Promise.all([
         supabase.from('indice').select('*'), 
         supabase.from('coordenadas').select('*')
     ]);
-
-    if (pRes.error) throw new Error("Tabla 'indice': " + pRes.error.message);
-    if (cRes.error) throw new Error("Tabla 'coordenadas': " + cRes.error.message);
-
-    datosIndice = pRes.data || []; 
-    datosCoordenadas = cRes.data || [];
-    
+    if (pRes.error || cRes.error) throw "Error de conexión";
+    datosIndice = pRes.data; datosCoordenadas = cRes.data;
     document.getElementById('loader').style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'flex';
-    
     renderTabla(datosIndice);
     initMap();
   } catch (e) { 
-    console.error(e);
-    document.getElementById('loader').innerHTML = `
-      <div style="color:#611232; font-weight:bold; max-width:600px; margin:0 auto; padding:20px; border:1px solid #611232; border-radius:8px; background:#fff5f5;">
-        <p style="font-size:16px; margin-bottom:8px;">⚠️ Error de conexión con Supabase</p>
-        <p style="font-size:13px; font-weight:normal; color:#333;">${e.message || e}</p>
-        <button onclick="location.reload()" style="margin-top:15px; padding:8px 16px; background:#002f2a; color:#fff; border:none; border-radius:4px; cursor:pointer;">Reintentar</button>
-      </div>`;
+    document.getElementById('loader').innerHTML = `<p style="color:red">Error al conectar: ${e}</p>`; 
   }
 }
 
@@ -185,14 +125,9 @@ async function abrirFicha(c) {
   document.getElementById('main-dashboard').style.display = 'none';
   document.getElementById('tab-ficha').style.display = 'block';
   document.getElementById('ficha-container').innerHTML = 'Cargando detalles...';
-  try {
-    const { data: f, error } = await supabase.from('fichas').select('*');
-    if (error) throw error;
-    const ficha = (f || []).find(x => (x['Común'] || x['común'] || x['comun']) === c) || {};
-    document.getElementById('ficha-container').innerHTML = `<h1>${c}</h1><p>${ficha['Distribución geográfica'] || 'Sin datos'}</p>`;
-  } catch(err) {
-    document.getElementById('ficha-container').innerHTML = `<p style="color:red;">Error al cargar la ficha: ${err.message}</p>`;
-  }
+  const { data: f } = await supabase.from('fichas').select('*');
+  const ficha = f.find(x => (x['Común'] || x['común'] || x['comun']) === c) || {};
+  document.getElementById('ficha-container').innerHTML = `<h1>${c}</h1><p>${ficha['Distribución geográfica'] || 'Sin datos'}</p>`;
 }
 
 function cerrarFicha() {
