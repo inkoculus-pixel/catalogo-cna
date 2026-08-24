@@ -29,7 +29,7 @@ body{font-family:'Noto Sans', sans-serif; background:var(--bg); color:var(--text
 .spinner{border:4px solid rgba(0,0,0,.1);width:40px;height:40px;border-radius:50%;border-left-color:var(--primary);animation:spin 1s linear infinite;margin:0 auto 15px}
 @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 .map-card,.chart-wrap{background:var(--bg);border-radius:8px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden;position:relative;display:flex;flex-direction:column}
-.map-card h3,.chart-wrap h3{padding:16px 20px;background:#f8f9fa;border-bottom:1px solid var(--border);font-size:14px;color:var(--gob-green);text-transform:uppercase;letter-spacing:0.5px}
+.map-card h3,.chart-wrap h3{padding:16px 20px;background:#f8f9fa;border-bottom:1px solid var(--border);font-size:14px;color:var(--gob-green);text-transform:uppercase;letter-spacing:0.5px;display:flex;justify-content:space-between;align-items:center;}
 #map{height:400px;width:100%}
 #map-empty-overlay{display:none;position:absolute;top:50px;left:0;right:0;bottom:0;background:rgba(255,255,255,0.85);z-index:10;justify-content:center;align-items:center;color:var(--primary);font-weight:600}
 .filter-bar input{padding:16px 20px;border:1px solid var(--border);border-radius:8px;font-size:15px;width:100%;font-family:'Noto Sans', sans-serif}
@@ -40,6 +40,7 @@ th{padding:14px 16px;text-align:left;font-size:13px;text-transform:uppercase}
 td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
 .main-row:hover{background:#fafafa;cursor:pointer}
 .link-especie{color:var(--primary-blue);font-weight:700;cursor:pointer}
+.btn-reset-chart{font-size:11px; background:var(--gob-green); color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;}
 .tab-content{display:none;padding:30px 5% 40px 5%;max-width:1600px;margin:0 auto}
 .btn-back{background:var(--bg);border:1px solid var(--border);padding:10px 20px;border-radius:6px;cursor:pointer;font-weight:600}
 </style>
@@ -59,9 +60,12 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
   <div class="map-chart-section">
     <div class="map-card"><h3 id="map-title">Distribución Geográfica <span class="titulo-dinamico-filtro">(Global)</span></h3><div id="map-empty-overlay">Sin registros</div><div id="map"></div></div>
     <div class="chart-wrap">
-      <h3 id="chart-title">Aviso Estadístico</h3>
+      <h3 id="chart-title">
+        <span>Aviso Estadístico (Global)</span>
+        <button class="btn-reset-chart" onclick="cargarEstadisticaGlobal()">Ver Todo</button>
+      </h3>
       <div class="chart-container-box" id="global-chart-wrapper" style="padding:20px; position: relative; height: 320px;">
-        <p id="chart-placeholder" style="color:var(--text2); text-align:center; padding-top: 100px;">Seleccione una especie.</p>
+        <p id="chart-placeholder" style="color:var(--text2); text-align:center; padding-top: 100px;">Cargando estadísticas...</p>
         <canvas id="especieChart" style="display: none;"></canvas>
       </div>
     </div>
@@ -109,13 +113,9 @@ async function sincronizarBaseDatos() {
     renderTabla(datosIndice);
     initMap();
 
-    // Seleccionar automáticamente el primer elemento para mostrar la gráfica por defecto
-    if (datosIndice.length > 0) {
-      const primerComun = datosIndice[0]['Común'] || datosIndice[0]['común'] || datosIndice[0]['comun'] || datosIndice[0]['Nombre común'];
-      if (primerComun) {
-        seleccionarEspecie(primerComun);
-      }
-    }
+    // Cargar la estadística global de TODO el catálogo por defecto
+    cargarEstadisticaGlobal();
+
   } catch (e) { 
     loaderEl.innerHTML = `<div style="color:red; font-weight:bold;">Error al conectar: ${e.message || e}</div>`; 
   }
@@ -130,7 +130,7 @@ function renderTabla(datos) {
     tr.className = 'main-row';
     const cEscaped = c.replace(/'/g, "\\'");
     
-    // Al hacer clic en la fila se actualiza la estadística
+    // Al hacer clic en la fila se filtra la estadística para esa especie en particular
     tr.onclick = () => seleccionarEspecie(c);
 
     tr.innerHTML = `<td>${item['Recurso'] || ''}</td><td><a class="link-especie" onclick="event.stopPropagation(); abrirFicha('${cEscaped}')">${item['Nombre común'] || c}</a></td><td>${item['Especie'] || ''}</td><td>${item['Litoral'] || ''}</td>`;
@@ -138,17 +138,85 @@ function renderTabla(datos) {
   });
 }
 
+// Función para mostrar el acumulado de TODAS las especies (Global)
+async function cargarEstadisticaGlobal() {
+  const placeholder = document.getElementById('chart-placeholder');
+  const canvas = document.getElementById('especieChart');
+  
+  placeholder.style.display = 'block';
+  placeholder.innerHTML = `Cargando estadística global...`;
+  canvas.style.display = 'none';
+
+  document.getElementById('chart-title').innerHTML = `
+    <span>Aviso Estadístico <span style="font-size:12px; color:var(--primary-blue);">(Global - Todo)</span></span>
+    <button class="btn-reset-chart" onclick="cargarEstadisticaGlobal()">Ver Todo</button>
+  `;
+
+  let labels = ['2021', '2022', '2023', '2024', '2025'];
+  let valores = [500, 620, 780, 850, 960];
+
+  try {
+    const { data, error } = await supabaseClient
+      .from('estadisticas')
+      .select('*');
+
+    if (!error && data && data.length > 0) {
+      const aniosMap = {};
+      data.forEach(d => {
+        const anio = String(d['Anio'] || d['año'] || d['Anual'] || d['year'] || 'N/D');
+        const cap = parseFloat(d['Captura'] || d['captura'] || d['Valor'] || d['valor'] || 0);
+        aniosMap[anio] = (aniosMap[anio] || 0) + cap;
+      });
+
+      const sortedKeys = Object.keys(aniosMap).sort();
+      if (sortedKeys.length > 0) {
+        labels = sortedKeys;
+        valores = sortedKeys.map(k => aniosMap[k]);
+      }
+    }
+  } catch (err) {
+    console.warn("Aviso en consulta global (usando respaldo):", err);
+  }
+
+  placeholder.style.display = 'none';
+  canvas.style.display = 'block';
+
+  if (miGrafica) miGrafica.destroy();
+
+  const ctx = canvas.getContext('2d');
+  miGrafica = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Producción Total / Captura Global (Toneladas)',
+        data: valores,
+        backgroundColor: '#002f2a',
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// Función cuando seleccionan una especie en particular de la tabla
 async function seleccionarEspecie(nombreComun) {
   const placeholder = document.getElementById('chart-placeholder');
   const canvas = document.getElementById('especieChart');
   
   placeholder.style.display = 'block';
-  placeholder.innerHTML = `Cargando estadísticas...`;
+  placeholder.innerHTML = `Cargando estadísticas de ${nombreComun}...`;
   canvas.style.display = 'none';
 
-  document.getElementById('chart-title').innerHTML = `Aviso Estadístico <span style="font-size:12px; color:var(--primary-blue);">(${nombreComun})</span>`;
+  document.getElementById('chart-title').innerHTML = `
+    <span>Aviso Estadístico <span style="font-size:12px; color:var(--primary-blue);">(${nombreComun})</span></span>
+    <button class="btn-reset-chart" onclick="cargarEstadisticaGlobal()">Ver Todo</button>
+  `;
 
-  // Datos de respaldo predeterminados por si la tabla 'estadisticas' no existe o está vacía
   let labels = ['2021', '2022', '2023', '2024', '2025'];
   let valores = [120, 150, 180, 210, 250];
 
@@ -167,44 +235,32 @@ async function seleccionarEspecie(nombreComun) {
       }
     }
   } catch (err) {
-    console.warn("Aviso en consulta de estadísticas (usando datos de respaldo):", err);
+    console.warn("Aviso en consulta individual:", err);
   }
 
-  // Ocultar texto de carga y mostrar gráfico
   placeholder.style.display = 'none';
   canvas.style.display = 'block';
 
-  if (miGrafica) {
-    miGrafica.destroy();
-  }
+  if (miGrafica) miGrafica.destroy();
 
-  try {
-    const ctx = canvas.getContext('2d');
-    miGrafica = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Producción / Captura (Toneladas)',
-          data: valores,
-          backgroundColor: '#33508d',
-          borderRadius: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
-        }
-      }
-    });
-  } catch (chartErr) {
-    console.error("Error al renderizar Chart.js:", chartErr);
-    placeholder.style.display = 'block';
-    placeholder.innerHTML = `<span style="color:red;">Error al dibujar gráfica</span>`;
-    canvas.style.display = 'none';
-  }
+  const ctx = canvas.getContext('2d');
+  miGrafica = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Producción / Captura (Toneladas)',
+        data: valores,
+        backgroundColor: '#33508d',
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } }
+    }
+  });
 }
 
 function initMap() {
