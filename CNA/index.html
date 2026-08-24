@@ -50,7 +50,10 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
   <h1>Instituto Mexicano de Investigación en Pesca y Acuacultura Sustentables</h1>
   <h2>Catálogo de recursos <span class="version-badge">v3.5</span></h2>
 </header>
-<div id="loader"><div class="spinner"></div><p>Cargando base de datos...</p></div>
+<div id="loader">
+  <div class="spinner"></div>
+  <p>Cargando base de datos...</p>
+</div>
 <div id="main-dashboard" class="dashboard-container" style="display:none;">
   <div class="filter-section"><div class="filter-bar"><input type="text" id="search-esp" placeholder="Buscar..." onkeyup="filtrarDashboardGlobal()"></div></div>
   <div class="map-chart-section">
@@ -61,33 +64,57 @@ td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
 </div>
 <div id="tab-ficha" class="tab-content"><button class="btn-back" onclick="cerrarFicha()">← Regresar</button><div id="ficha-container"></div></div>
 <footer class="gobmx-footer"></footer>
+
 <script>
 // --- INICIALIZACIÓN SEGURA ---
-if (!window.supabaseClient) {
-  window.supabaseClient = supabase.createClient(
-    'https://fhhocpfjwyhowrhrrqmh.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo'
-  );
+let supabaseClient = null;
+
+try {
+  if (typeof supabase !== 'undefined') {
+    supabaseClient = supabase.createClient(
+      'https://fhhocpfjwyhowrhrrqmh.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZoaG9jcGZqd3lob3dyaHJycW1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MzA0NTAsImV4cCI6MjA5NjUwNjQ1MH0.ZS4sFMBZHxlQZgVe5JMUjatbURRnKoUbwcg45CyTUzo'
+    );
+  }
+} catch (err) {
+  console.error("Error al inicializar cliente Supabase:", err);
 }
-const supabase = window.supabaseClient;
 
 let datosIndice = [], datosCoordenadas = [], map, markerCluster;
 
 async function sincronizarBaseDatos() {
+  const loaderEl = document.getElementById('loader');
   try {
-    document.getElementById('loader').style.display = 'block';
+    if (!supabaseClient) {
+      throw new Error("No se pudo cargar la librería de Supabase.");
+    }
+
+    loaderEl.style.display = 'block';
+    
+    // Realizamos las peticiones en paralelo de forma segura
     const [pRes, cRes] = await Promise.all([
-        supabase.from('indice').select('*'), 
-        supabase.from('coordenadas').select('*')
+        supabaseClient.from('indice').select('*'), 
+        supabaseClient.from('coordenadas').select('*')
     ]);
-    if (pRes.error || cRes.error) throw "Error de conexión";
-    datosIndice = pRes.data; datosCoordenadas = cRes.data;
-    document.getElementById('loader').style.display = 'none';
+
+    if (pRes.error) throw new Error("Tabla 'indice': " + pRes.error.message);
+    if (cRes.error) throw new Error("Tabla 'coordenadas': " + cRes.error.message);
+
+    datosIndice = pRes.data || []; 
+    datosCoordenadas = cRes.data || [];
+
+    loaderEl.style.display = 'none';
     document.getElementById('main-dashboard').style.display = 'flex';
+    
     renderTabla(datosIndice);
     initMap();
   } catch (e) { 
-    document.getElementById('loader').innerHTML = `<p style="color:red">Error al conectar: ${e}</p>`; 
+    console.error("Detalle del error:", e);
+    loaderEl.innerHTML = `
+      <div style="color:red; font-weight:bold; margin-bottom: 8px;">Error al conectar con la base de datos</div>
+      <div style="color:#555; font-size:14px; background:#fff2f2; padding:10px; border-radius:4px; display:inline-block; border:1px solid #ffcccc;">${e.message || e}</div>
+      <p style="margin-top:15px; font-size:13px; color:#888;">Verifica la consola del navegador (F12) para más detalles.</p>
+    `; 
   }
 }
 
@@ -125,8 +152,8 @@ async function abrirFicha(c) {
   document.getElementById('main-dashboard').style.display = 'none';
   document.getElementById('tab-ficha').style.display = 'block';
   document.getElementById('ficha-container').innerHTML = 'Cargando detalles...';
-  const { data: f } = await supabase.from('fichas').select('*');
-  const ficha = f.find(x => (x['Común'] || x['común'] || x['comun']) === c) || {};
+  const { data: f } = await supabaseClient.from('fichas').select('*');
+  const ficha = (f || []).find(x => (x['Común'] || x['común'] || x['comun']) === c) || {};
   document.getElementById('ficha-container').innerHTML = `<h1>${c}</h1><p>${ficha['Distribución geográfica'] || 'Sin datos'}</p>`;
 }
 
